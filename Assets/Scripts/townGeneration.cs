@@ -22,10 +22,11 @@ public class townGeneration : MonoBehaviour
 
     // GameObjects used in object spawning and road generation
     public GameObject floorPrefab;
-    public GameObject currentTile;
+    private GameObject currentTile;
     public GameObject curObjectSpawning;
     private GameObject objectPlacer;
     private GameObject finalFloor;
+    public Terrain terrainToSpawn;
 
     //ray for house rotation
     private Ray houseToRoadRay;
@@ -105,6 +106,11 @@ public class townGeneration : MonoBehaviour
         }
     }
 
+    public void spawnEmptyMap()
+    {
+        instantiateObject(terrain.gameObject, Vector3.zero, Quaternion.identity, tag = "Terrain", true);
+    }
+
     public void addToAllObjects(GameObject obj)
     {
         allObjectsInScene.Add(obj);
@@ -148,8 +154,6 @@ public class townGeneration : MonoBehaviour
         generateRoad(roadSizeString);
         rotateBuildings();
         spawnWalls(objectPrefabs[2], 1f);
-
-        gameObject.GetComponent<playerMovement>().invokeChangePlayer();
     }
 
     void Update()
@@ -251,7 +255,7 @@ public class townGeneration : MonoBehaviour
     }
     
     // spawn objects and make sure they get put in correct lists
-    private GameObject instantiateObject(GameObject obj, Vector3 pos, Quaternion rot, string tag, bool toSave)
+    public GameObject instantiateObject(GameObject obj, Vector3 pos, Quaternion rot, string tag, bool toSave)
     {
         GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
         if (tag == null)
@@ -319,7 +323,7 @@ public class townGeneration : MonoBehaviour
                 GameObject conLeft2 = tempRayInfo.collider.transform.Find("conLeft").gameObject;
                 allRays.Add(new List<Vector3>() { conRight.transform.position, conLeft2.transform.position });
                 //GameObject tempObj = Instantiate(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0));
-                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), "Wall", true);
+                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), null, true);
                 tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
                 
                 // sqrt((x1 - x2)^2 + (z1 - z2)^2) = length of wall
@@ -520,7 +524,7 @@ public class townGeneration : MonoBehaviour
         }
 
         GameObject[] allTiles = GameObject.FindGameObjectsWithTag("Floor");
-        tilesToMesh(allTiles);
+        //tilesToMesh(allTiles);
 
         foreach (GameObject tile in allTiles)
         {

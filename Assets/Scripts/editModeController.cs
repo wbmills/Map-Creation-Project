@@ -4,6 +4,7 @@ using UnityEngine;
 using System.IO;
 using TMPro;
 using UnityEngine.UI;
+using System.Reflection;
 
 public class editModeController : MonoBehaviour
 {
@@ -12,35 +13,70 @@ public class editModeController : MonoBehaviour
     public GameObject spotlight;
     private Vector3 mousePosinWorld;
     private Terrain terrain;
-    public Button spawnButton;
-    public GameObject curSceneObject;
+    private GameObject curSceneObject;
     public Dropdown prefabList;
     private GameObject sceneController;
-    public GameObject tempCollision;
-    public Terrain t;
+    private GameObject tempCollision;
 
+    private float scrollSensitivity = 80f;
     private loadTown ltScript;
     private playerMovement pmScript;
     private townGeneration tgScript;
-
+    private Dictionary<KeyCode, string> buttons;
     private GameObject[] objectPrefabs;
-    public Vector3 curMousePos;
+    private Vector3 curMousePos;
     void Start()
     {
         terrain = GameObject.FindAnyObjectByType<Terrain>();
         curSceneObject = null;
         sceneController = GameObject.Find("SceneManager");
         pmScript = sceneController.GetComponent<playerMovement>();
-        tgScript = sceneController.GetComponent<townGeneration>();
+        tgScript = gameObject.GetComponent<townGeneration>();
         ltScript = sceneController.GetComponent<loadTown>();
-
-        spawnButton.onClick.AddListener(spawnObject);
+        setButtons();
         generateButtons();
+    }
+
+    private void setButtons()
+    {
+        buttons = new Dictionary<KeyCode, string>(){
+            {KeyCode.Equals, "zoomIn" },
+            {KeyCode.Minus, "zoomOut" },
+            {KeyCode.R, "rotateObject" },
+            {KeyCode.Backspace, "deleteCurrentObject" },
+            {KeyCode.Mouse1, "outputCurHit" },
+            {KeyCode.Return, "spawnObject" },
+            {KeyCode.Mouse2, "saveToFBX" }
+        };
+    }
+    private void saveToFBX()
+    {
+        print("functio");
+        GameObject parentOb = GameObject.Find("ObjectParent");
+        transform.GetComponent<exportScene>().ExportMapAsFBX(parentOb);
     }
 
     void Update()
     {
-        if (pmScript.getCurrentPlayer().name == "Edit Mode")
+        foreach (var buttonMethodDict in buttons)
+        {
+            if (Input.GetKeyDown(buttonMethodDict.Key))
+            {
+                MethodInfo mi = this.GetType().GetMethod(buttonMethodDict.Value, BindingFlags.NonPublic | BindingFlags.Instance);
+                mi.Invoke(this, null);
+            }
+        }
+
+/*        if (Input.GetKeyDown(KeyCode.Mouse1))
+        {
+            saveToFBX();
+        }*/
+
+        transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
+        transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
+        transform.Translate(Input.GetAxis("Mouse ScrollWheel") * Vector3.forward * scrollSensitivity);
+
+        if (sceneController.GetComponent<cameraController>().getCurrentCamera() == "EditModeCamera")
         {
             spotlight.SetActive(true);
         }
@@ -63,33 +99,22 @@ public class editModeController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Mouse0) && curSceneObject != null)
         {
             curSceneObject.transform.position = new Vector3(curSceneObject.transform.position.x,
-                t.SampleHeight(curSceneObject.transform.position),
+                terrain.SampleHeight(curSceneObject.transform.position),
                 curSceneObject.transform.position.z);
             curSceneObject = null;
             tempCollision = null;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-            print($"curOb {curSceneObject}, temp{tempCollision}");
         }
 
         if (curSceneObject != null)
         {
             moveObject();
         }
-
-        if (Input.GetKeyDown(KeyCode.R) && curSceneObject != null)
-        {
-            rotateObject();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Backspace) && curSceneObject != null)
-        {
-            deleteCurrentObject();
-        }
     }
 
+    private void outputCurHit()
+    {
+        Debug.Log($"curOb {curSceneObject}, temp{tempCollision}");
+    }
 
     private void connectWalls()
     {
@@ -114,7 +139,10 @@ public class editModeController : MonoBehaviour
 
     private void rotateObject()
     {
-        curSceneObject.transform.Rotate(new Vector3(0, 90, 0));
+        if (curSceneObject != null)
+        {
+            curSceneObject.transform.Rotate(new Vector3(0, 90, 0));
+        }
     }
 
     private void moveObject()
@@ -122,11 +150,14 @@ public class editModeController : MonoBehaviour
         mousePosinWorld = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.y));
         curSceneObject.transform.position = new Vector3(mousePosinWorld.x, .003f, mousePosinWorld.z);
     }
+    public void callSpawn()
+    {
+        spawnObject();
+    }
     private void spawnObject()
     {
         int selection = getSelection();
-        GameObject tempOb = Instantiate(objectPrefabs[selection]).gameObject;
-        tempOb.tag = "Details";
+        GameObject tempOb = transform.GetComponent<townGeneration>().instantiateObject(objectPrefabs[selection], Vector3.zero, Quaternion.identity, "Details", true);
         curSceneObject = tempOb;
     }
 
@@ -137,8 +168,11 @@ public class editModeController : MonoBehaviour
 
     private void deleteCurrentObject()
     {
-        Destroy(curSceneObject);
-        curSceneObject = null;
+        if (curSceneObject != null)
+        {
+            Destroy(curSceneObject);
+            curSceneObject = null;
+        }
     }
     public void setCurrentCollisionObject(GameObject ob)
     {

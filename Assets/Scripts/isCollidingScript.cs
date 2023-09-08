@@ -11,7 +11,7 @@ public class isCollidingScript : MonoBehaviour
     private void Start()
     {
         Physics.IgnoreCollision(GetComponent<BoxCollider>(), t.GetComponent<TerrainCollider>(), true);
-        EditMode = GameObject.Find("Edit Mode");
+        EditMode = GameObject.Find("EditModeController");
         emcScript = EditMode.GetComponent<editModeController>();
     }
     private void OnTriggerEnter(Collider other)

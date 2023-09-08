@@ -25,7 +25,7 @@ public class playerMovement : MonoBehaviour
     float yaw = 0f;
     float pitch = 0f;
 
-    public float maxY = -65; // For some reason, the signs are strange.
+    public float maxY = -65;
     public float minY = 50;
 
     void Start()
@@ -158,14 +158,6 @@ public class playerMovement : MonoBehaviour
         if (!isMenuActive)
         {
             player.GetComponent<Rigidbody>().AddForce(Vector3.up * 10, ForceMode.Impulse);
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.collider.tag == "Wall")
-        {
-            //player.GetComponent<Rigidbody>().AddForce(-player.transform.forward * 10, ForceMode.Force);
         }
     }
 

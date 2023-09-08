@@ -25,14 +25,9 @@ public class editModeController : MonoBehaviour
 
     private GameObject[] objectPrefabs;
     public Vector3 curMousePos;
-
-    private bool rotateMode;
-    private bool moveMode;
     void Start()
     {
         terrain = GameObject.FindAnyObjectByType<Terrain>();
-        rotateMode = false;
-        moveMode = false;
         curSceneObject = null;
         sceneController = GameObject.Find("SceneManager");
         pmScript = sceneController.GetComponent<playerMovement>();
@@ -120,7 +115,6 @@ public class editModeController : MonoBehaviour
     private void rotateObject()
     {
         curSceneObject.transform.Rotate(new Vector3(0, 90, 0));
-        rotateMode = false;
     }
 
     private void moveObject()

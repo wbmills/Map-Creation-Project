@@ -56,12 +56,12 @@ public class townGeneration : MonoBehaviour
     // the size of the object to be spawned and the list of objects that can be spawned
     public GameObject[] objectPrefabs;
     private Vector3 objectBounds;
-    private List<GameObject> allObjects;
+    private List<GameObject> allObjectsInScene;
     
 
     void Start()
     {
-        allObjects = new List<GameObject>();
+        allObjectsInScene = new List<GameObject>();
         allRays = new List<List<Vector3>>();
         objectPlacer = GameObject.FindGameObjectWithTag("Object Placer");
 
@@ -85,6 +85,7 @@ public class townGeneration : MonoBehaviour
             setPlayerPrefs(0, 0, 0, 0);
         }
     }
+
     public void killMap()
     {
         float[,,] splatmapData = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
@@ -98,7 +99,7 @@ public class townGeneration : MonoBehaviour
         }
         terrain.terrainData.SetAlphamaps(0, 0, splatmapData);
 
-        foreach (GameObject obj in allObjects)
+        foreach (GameObject obj in allObjectsInScene)
         {       
                 Destroy(obj);
         }
@@ -106,8 +107,9 @@ public class townGeneration : MonoBehaviour
 
     public void addToAllObjects(GameObject obj)
     {
-        allObjects.Add(obj);
+        allObjectsInScene.Add(obj);
     }
+
     private int[] getPlayerPrefs()
     {
         int[] all = new int[] { PlayerPrefs.GetInt("houseNum"), PlayerPrefs.GetInt("treeNum"),
@@ -129,6 +131,7 @@ public class townGeneration : MonoBehaviour
     {
         killMap();
     }
+
     public void generate()
     {
         killMap();
@@ -146,7 +149,6 @@ public class townGeneration : MonoBehaviour
         rotateBuildings();
         spawnWalls(objectPrefabs[2], 1f);
 
-        //finalFloor.SetActive(false);
         gameObject.GetComponent<playerMovement>().invokeChangePlayer();
     }
 
@@ -154,7 +156,6 @@ public class townGeneration : MonoBehaviour
     {
         drawObjectRay(objectPrefabs[0], Quaternion.identity);
     }
-
 
     private void drawRoadRay()
     {
@@ -249,6 +250,30 @@ public class townGeneration : MonoBehaviour
         return false;
     }
     
+    // spawn objects and make sure they get put in correct lists
+    private GameObject instantiateObject(GameObject obj, Vector3 pos, Quaternion rot, string tag, bool toSave)
+    {
+        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
+        if (tag == null)
+        {
+            tag = obj.tag;
+        }
+        else if (tag == "Floor")
+        {
+            allTilePositions.Add(pos);
+        }
+
+        GameObject tempObj = Instantiate(obj, pos, rot);
+        tempObj.tag = tag;
+
+        // if toSave, add to parent object (empty gameObject) to be exported as FBX
+        if (toSave)
+        {
+            tempObj.transform.SetParent(parentOb.transform);
+        }
+
+        return tempObj;
+    }
 
     private void rotateBuildings()
     {
@@ -293,9 +318,9 @@ public class townGeneration : MonoBehaviour
             {
                 GameObject conLeft2 = tempRayInfo.collider.transform.Find("conLeft").gameObject;
                 allRays.Add(new List<Vector3>() { conRight.transform.position, conLeft2.transform.position });
-                GameObject tempObj = Instantiate(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0));
+                //GameObject tempObj = Instantiate(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0));
+                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), "Wall", true);
                 tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
-                allObjects.Add(tempObj);
                 
                 // sqrt((x1 - x2)^2 + (z1 - z2)^2) = length of wall
                 float tempX = Mathf.Sqrt(squareNum(conRight.transform.position.x - conLeft2.transform.position.x) + squareNum(conRight.transform.position.z - conLeft2.transform.position.z));
@@ -340,9 +365,10 @@ public class townGeneration : MonoBehaviour
                 {
                     obj = obList[Random.Range(0, obList.Count)];
                     objBounds = obj.GetComponent<Renderer>().bounds.size;
-                    GameObject tempObj = Instantiate(obj, curPos, Quaternion.identity);
+                    //GameObject tempObj = Instantiate(obj, curPos, Quaternion.identity);
+                    GameObject tempObj = instantiateObject(obj, curPos, Quaternion.identity, obj.tag, true);
                     tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
-                    allObjects.Add(tempObj);
+                    allObjectsInScene.Add(tempObj);
                     curNum++;
                 }
                 else
@@ -358,6 +384,7 @@ public class townGeneration : MonoBehaviour
     {
         return num * num;
     }
+
     public void spawnObjects(int objectCount, int rows, string selectedTag)
     {
         int maxCols = objectCount;
@@ -405,10 +432,9 @@ public class townGeneration : MonoBehaviour
                     
                     if (ob.Value >= chance && !isRaycastColliding())
                     {
-                        GameObject tempObj = Instantiate(ob.Key, objectPlacer.transform.position, newObjectRotation);
-                        tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
-                        allObjects.Add(tempObj);
-                        
+                        //GameObject tempObj = Instantiate(ob.Key, objectPlacer.transform.position, newObjectRotation);
+                        GameObject tempObj = instantiateObject(ob.Key, objectPlacer.transform.position, newObjectRotation, ob.Key.tag, true);
+                        tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));  
                     }
                     x += boundsZ[1] / maxRows;
                     objectPlacer.transform.rotation = tempSpawnerRotation;
@@ -420,16 +446,14 @@ public class townGeneration : MonoBehaviour
         }
     }
 
-   
     public void generateRoad(int maxTiles)
     {
         Vector3 initPos;
         if (GameObject.FindGameObjectWithTag("Floor") == null)
         {
-            //Vector3 initPos = new Vector3(Random.Range(boundsX[0], boundsX[1]), .003f, Random.Range(boundsZ[0], boundsZ[1]));
             initPos = new Vector3(boundsX[1] / 2, .003f, boundsZ[1] / 2);
-            currentTile = Instantiate(floorPrefab, initPos, Quaternion.identity);
-            allObjects.Add(currentTile);
+            //currentTile = Instantiate(floorPrefab, initPos, Quaternion.identity);
+            currentTile = instantiateObject(floorPrefab, initPos, Quaternion.identity, floorPrefab.tag, false);
         }
         else
         {
@@ -437,7 +461,6 @@ public class townGeneration : MonoBehaviour
             initPos = currentTile.transform.position;
         }
         
-
         drawRoadRay();
         int attempts = 0;
         int tileCount = 0;
@@ -459,8 +482,8 @@ public class townGeneration : MonoBehaviour
                 if (!posOutOfBounds && (!tileRayHit.collider && tileRayHit.distance == 0) | tileRayHit.distance > tileSizeX)
                 {
                     Vector3 tempPos = curPos + (currentTile.transform.forward * tileSizeX);
-                    GameObject tempObject = Instantiate(floorPrefab, tempPos, Quaternion.Euler(0, yRotation, 0));
-                    allObjects.Add(tempObject);
+                    //GameObject tempObject = Instantiate(floorPrefab, tempPos, Quaternion.Euler(0, yRotation, 0));
+                    GameObject tempObject = instantiateObject(floorPrefab, tempPos, Quaternion.Euler(0, yRotation, 0), floorPrefab.tag, true);
 
                     if (yRotation == -90 | yRotation == 90)
                     {
@@ -497,29 +520,36 @@ public class townGeneration : MonoBehaviour
         }
 
         GameObject[] allTiles = GameObject.FindGameObjectsWithTag("Floor");
-        CombineInstance[] tileMeshInstances = new CombineInstance[allTiles.Length];
+        tilesToMesh(allTiles);
 
-        //float[,,] splatmapData = new float[terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight, 0];
-        
-        //print(terrain.terrainData.alphamapLayers);
-        int i = 0;
         foreach (GameObject tile in allTiles)
         {
             tile.transform.Translate(Vector3.up * terrain.SampleHeight(tile.transform.position));
             allTilePositions.Add(tile.transform.position);
             terrainPainter(new List<Vector3>() { tile.transform.position });
+            Destroy(tile); 
+        }
+    }
+
+    private void tilesToMesh(GameObject[] allTiles)
+    {
+        CombineInstance[] tileMeshInstances = new CombineInstance[allTiles.Length];
+
+        Mesh tileMesh = new Mesh();
+        tileMesh.CombineMeshes(tileMeshInstances);
+
+        int i = 0;
+        foreach (GameObject tile in allTiles)
+        {
             tileMeshInstances[i].mesh = tile.GetComponent<MeshFilter>().sharedMesh;
             tileMeshInstances[i].transform = tile.transform.localToWorldMatrix;
-            Destroy(tile);
             i++;
         }
 
-        Mesh tileMesh = new Mesh();
-        //tileMesh.CombineMeshes(tileMeshInstances);
         //finalFloor = Instantiate(emptyPrefab, Vector3.zero, Quaternion.identity);
-        //finalFloor.tag = "Floor";
-        //finalFloor.transform.GetComponent<MeshFilter>().sharedMesh = tileMesh;
-        //finalFloor.transform.gameObject.SetActive(true);
+        finalFloor = instantiateObject(emptyPrefab, Vector3.zero, Quaternion.identity, "Floor", false);
+        finalFloor.transform.GetComponent<MeshFilter>().sharedMesh = tileMesh;
+        finalFloor.transform.gameObject.SetActive(false);
     }
 
     public void terrainPainter(List<Vector3> tilePositions)

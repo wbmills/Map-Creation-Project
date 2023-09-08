@@ -113,7 +113,10 @@ public class loadTown : MonoBehaviour
             }
         }
 
-        foreach(Vector3 tilePos in tgScript.allTilePositions)
+        Terrain t = Terrain.activeTerrain;
+        
+
+        foreach(Vector3 tilePos in allTilePositions)
         {
             string namePosString = $"Floor,{tilePos.x},{tilePos.y},{tilePos.z},{0},{0},{0}";
             writeCSV(namePosString);

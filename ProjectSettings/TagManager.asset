@@ -12,6 +12,7 @@ TagManager:
   - Tree
   - Details
   - Walls
+  - Object Parent
   layers:
   - Default
   - TransparentFX

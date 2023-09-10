@@ -33,7 +33,7 @@ public class loadTown : MonoBehaviour
         autosave = false;
         saveOptions = new List<string>() { "Save 1", "Save 2", "Save 3" };
         file = saveOptions[0];
-        tgScript = transform.GetComponent<townGeneration>();
+        tgScript = GameObject.Find("EditModeController").GetComponent<townGeneration>();
     }
 
     private void OnApplicationQuit()
@@ -115,8 +115,7 @@ public class loadTown : MonoBehaviour
 
         Terrain t = Terrain.activeTerrain;
         
-
-        foreach(Vector3 tilePos in allTilePositions)
+        foreach (Vector3 tilePos in tgScript.getAllTilePositions())
         {
             string namePosString = $"Floor,{tilePos.x},{tilePos.y},{tilePos.z},{0},{0},{0}";
             writeCSV(namePosString);
@@ -168,7 +167,6 @@ public class loadTown : MonoBehaviour
             }
         }
         tgScript.terrainPainter(allTilePositions);
-        gameObject.GetComponent<playerMovement>().invokeChangePlayer();
         print("Load Complete.");
     }
 }

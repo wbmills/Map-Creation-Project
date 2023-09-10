@@ -62,6 +62,7 @@ public class townGeneration : MonoBehaviour
 
     void Start()
     {
+        allTilePositions = new List<Vector3>();
         allObjectsInScene = new List<GameObject>();
         allRays = new List<List<Vector3>>();
         objectPlacer = GameObject.FindGameObjectWithTag("Object Placer");
@@ -154,6 +155,11 @@ public class townGeneration : MonoBehaviour
         generateRoad(roadSizeString);
         rotateBuildings();
         spawnWalls(objectPrefabs[2], 1f);
+    }
+
+    public List<Vector3> getAllTilePositions()
+    {
+        return allTilePositions;
     }
 
     void Update()

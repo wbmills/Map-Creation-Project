@@ -8,11 +8,11 @@ FBXHeaderExtension:  {
 		Version: 1000
 		Year: 2023
 		Month: 9
-		Day: 10
-		Hour: 7
-		Minute: 45
-		Second: 59
-		Millisecond: 851
+		Day: 12
+		Hour: 15
+		Minute: 12
+		Second: 8
+		Millisecond: 456
 	}
 	Creator: "FBX SDK/FBX Plugins version 2020.3.2"
 	SceneInfo: "SceneInfo::GlobalInfo", "UserData" {
@@ -28,8 +28,8 @@ FBXHeaderExtension:  {
 			Comment: ""
 		}
 		Properties70:  {
-			P: "DocumentUrl", "KString", "Url", "", "C:\Users\willb\Documents\Programming\Unity\Dissertation\Assets\fpdez4tl_Map.fbx"
-			P: "SrcDocumentUrl", "KString", "Url", "", "C:\Users\willb\Documents\Programming\Unity\Dissertation\Assets\fpdez4tl_Map.fbx"
+			P: "DocumentUrl", "KString", "Url", "", "C:\Users\willb\Documents\Programming\Unity\Dissertation\Assets\ll44hvu8_Map.fbx"
+			P: "SrcDocumentUrl", "KString", "Url", "", "C:\Users\willb\Documents\Programming\Unity\Dissertation\Assets\ll44hvu8_Map.fbx"
 			P: "Original", "Compound", "", ""
 			P: "Original|ApplicationVendor", "KString", "", "", ""
 			P: "Original|ApplicationName", "KString", "", "", "Unity FBX Exporter"
@@ -75,7 +75,7 @@ GlobalSettings:  {
 
 Documents:  {
 	Count: 1
-	Document: 1647961415360, "Scene", "Scene" {
+	Document: 2735500038800, "Scene", "Scene" {
 		Properties70:  {
 			P: "SourceObject", "object", "", ""
 			P: "ActiveAnimStackName", "KString", "", "", ""
@@ -183,7 +183,7 @@ Definitions:  {
 ;------------------------------------------------------------------
 
 Objects:  {
-	Model: 1644448304704, "Model::ObjectParent", "Null" {
+	Model: 2735434754112, "Model::Town_Terrain", "Null" {
 		Version: 232
 		Properties70:  {
 			P: "RotationOrder", "enum", "", "",4
@@ -201,8 +201,8 @@ Objects:  {
 
 Connections:  {
 	
-	;Model::ObjectParent, Model::RootNode
-	C: "OO",1644448304704,0
+	;Model::Town_Terrain, Model::RootNode
+	C: "OO",2735434754112,0
 }
 ;Takes section
 ;----------------------------------------------------

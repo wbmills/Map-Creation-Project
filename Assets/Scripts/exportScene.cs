@@ -13,11 +13,11 @@ public class exportScene : MonoBehaviour
     // from https://docs.unity3d.com/Packages/com.unity.formats.fbx@2.0/manual/devguide.html
     public void ExportMapAsFBX(GameObject parentObj)
     {
-        //GameObject terrainOb = Terrain.activeTerrain.gameObject;
-        //terrainOb.transform.SetParent(parentObj.transform);
+        Terrain tOb = FindAnyObjectByType<Terrain>();
         GameObject allObjs = GameObject.FindGameObjectWithTag("Object Parent");
         string filePath = Path.Combine(Application.dataPath, "Map.fbx");
-        ModelExporter.ExportObject(filePath, allObjs);
+        //ModelExporter.ExportObject(filePath, allObjs);
+        ModelExporter.ExportObject(filePath, tOb);
         Debug.Log($"Successful Save in {filePath}");
     }
 

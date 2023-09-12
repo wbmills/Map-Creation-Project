@@ -25,6 +25,7 @@ public class editModeController : MonoBehaviour
     private Dictionary<KeyCode, string> buttons;
     private GameObject[] objectPrefabs;
     private Vector3 curMousePos;
+
     void Start()
     {
         terrain = GameObject.FindAnyObjectByType<Terrain>();
@@ -33,8 +34,20 @@ public class editModeController : MonoBehaviour
         pmScript = sceneController.GetComponent<playerMovement>();
         tgScript = gameObject.GetComponent<townGeneration>();
         ltScript = sceneController.GetComponent<loadTown>();
+        updatePrefabs();
         setButtons();
-        generateButtons();
+    }
+
+    private void updatePrefabs()
+    {
+        objectPrefabs = tgScript.objectPrefabs;
+        var tempList = new List<string>();
+        foreach (GameObject ob in objectPrefabs)
+        {
+            tempList.Add(ob.name);
+        }
+        prefabList.ClearOptions();
+        prefabList.AddOptions(tempList);
     }
 
     private void setButtons()
@@ -46,13 +59,27 @@ public class editModeController : MonoBehaviour
             {KeyCode.Backspace, "deleteCurrentObject" },
             {KeyCode.Mouse1, "outputCurHit" },
             {KeyCode.Return, "spawnObject" },
-            {KeyCode.Mouse2, "saveToFBX" }
+            {KeyCode.Mouse2, "saveToFBX" },
+            {KeyCode.Slash, "updatePrefabs" },
+            {KeyCode.Alpha1, "changePrefabSelection" }
         };
     }
+
+    private void changePrefabSelection()
+    {
+        if (prefabList.value < prefabList.options.Count)
+        {
+            prefabList.value = prefabList.value + 1;
+        }
+        else
+        {
+            prefabList.value = 0;
+        }
+    }
+
     private void saveToFBX()
     {
-        print("functio");
-        GameObject parentOb = GameObject.Find("ObjectParent");
+        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
         transform.GetComponent<exportScene>().ExportMapAsFBX(parentOb);
     }
 
@@ -66,11 +93,6 @@ public class editModeController : MonoBehaviour
                 mi.Invoke(this, null);
             }
         }
-
-/*        if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-            saveToFBX();
-        }*/
 
         transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
         transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
@@ -120,16 +142,6 @@ public class editModeController : MonoBehaviour
     {
         // select two buildings and spawn wall between them
     }
-    private void generateButtons()
-    {
-        objectPrefabs = tgScript.objectPrefabs;
-        List<string> l = new List<string>();
-        foreach (GameObject obj in objectPrefabs)
-        {
-            l.Add(obj.name);
-        }
-        prefabList.AddOptions(l);
-    }
 
     private int getSelection()
     {
@@ -150,10 +162,12 @@ public class editModeController : MonoBehaviour
         mousePosinWorld = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.y));
         curSceneObject.transform.position = new Vector3(mousePosinWorld.x, .003f, mousePosinWorld.z);
     }
+
     public void callSpawn()
     {
         spawnObject();
     }
+
     private void spawnObject()
     {
         int selection = getSelection();
@@ -174,6 +188,7 @@ public class editModeController : MonoBehaviour
             curSceneObject = null;
         }
     }
+
     public void setCurrentCollisionObject(GameObject ob)
     {
         if (tempCollision == null)

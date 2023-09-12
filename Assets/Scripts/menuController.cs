@@ -84,6 +84,7 @@ public class menuController : MonoBehaviour
         }
     }
 
+
     public bool menuExists(string menuChoice)
     {
         foreach(GameObject ob in menuArr)

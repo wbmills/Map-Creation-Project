@@ -7,7 +7,6 @@ using System.IO;
 
 public class loadTown : MonoBehaviour
 {
-    public ObjectInformation[] objectInformation;
     public bool autosave;
     private townGeneration tgScript;
     public string file;
@@ -52,8 +51,9 @@ public class loadTown : MonoBehaviour
             writer.WriteLine(data);
         }
     }
-    public void readCSV()
+    private ObjectInformation[] readCSV()
     {
+        ObjectInformation[] objectInformation;
         setFile();
         string path = $"Assets/Files/{file}.csv";
         string[] data = File.ReadAllLines(path);
@@ -76,7 +76,9 @@ public class loadTown : MonoBehaviour
                 objectInformation[i-1].rotationY = float.Parse(dataSubset[5]);
                 objectInformation[i-1].rotationZ = float.Parse(dataSubset[6]);
             }
+            return objectInformation;
         }
+        return null;
     }
     private void clearCSV()
     {
@@ -127,7 +129,12 @@ public class loadTown : MonoBehaviour
     {
         print("loading...");
         tgScript.killMap();
-        GameObject[] allBuldings = GameObject.FindGameObjectsWithTag("Building");
+        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
+        for(int i=0; i < parentOb.transform.childCount; i++)
+        {
+            Destroy(parentOb.transform.GetChild(i));
+        }
+/*        GameObject[] allBuldings = GameObject.FindGameObjectsWithTag("Building");
         GameObject[] allTrees = GameObject.FindGameObjectsWithTag("Tree");
         GameObject[] allExtras = GameObject.FindGameObjectsWithTag("Details");
         GameObject[] allWalls = GameObject.FindGameObjectsWithTag("Walls");
@@ -138,7 +145,7 @@ public class loadTown : MonoBehaviour
             {
                 Destroy(obj);
             }
-        }
+        }*/
 
         GameObject[] objectPrefabs = tgScript.objectPrefabs;
         Dictionary<string, GameObject> obDict = new Dictionary<string, GameObject>();
@@ -148,8 +155,11 @@ public class loadTown : MonoBehaviour
             obDict.Add(obj.name, obj);
         }
 
-        readCSV();
-        print(objectInformation.Length);
+        ObjectInformation[] objectInformation = readCSV();
+        if (objectInformation == null)
+        {
+            print("Read CSV Error");
+        }
         foreach(var ob in objectInformation)
         {
             string n = ob.name.Replace("(Clone)", "");
@@ -158,12 +168,16 @@ public class loadTown : MonoBehaviour
                 allTilePositions.Add(new Vector3(ob.positionX, ob.positionY, ob.positionZ));
                 tgScript.allTilePositions.Add(new Vector3(ob.positionX, ob.positionY, ob.positionZ));
             }
+            else if (obDict.ContainsKey(n))
+            {
+                    GameObject tempOb = obDict[n];
+                    Vector3 tempPos = new Vector3(ob.positionX, ob.positionY, ob.positionZ);
+                    Quaternion tempRot = Quaternion.Euler(ob.rotationX, ob.rotationY, ob.rotationZ);
+                    tgScript.instantiateObject(tempOb, tempPos, tempRot, null, true);
+            }
             else
             {
-                GameObject tempOb = obDict[n];
-                Vector3 tempPos = new Vector3(ob.positionX, ob.positionY, ob.positionZ);
-                Quaternion tempRot = Quaternion.Euler(ob.rotationX, ob.rotationY, ob.rotationZ);
-                Instantiate(tempOb, tempPos, tempRot);
+                print($"{n} object not in object prefabs");
             }
         }
         tgScript.terrainPainter(allTilePositions);

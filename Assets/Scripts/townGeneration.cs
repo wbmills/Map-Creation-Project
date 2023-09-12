@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine.UI;
 using System;
 using Random = UnityEngine.Random;
+using System.IO;
 
 public class townGeneration : MonoBehaviour
 {
@@ -14,6 +15,8 @@ public class townGeneration : MonoBehaviour
     public TMP_InputField treeNum;
     public TMP_InputField extrasNum;
     public TMP_InputField roadSize;
+
+    // for the road tiles
     public GameObject emptyPrefab;
 
     public List<Vector3> allTilePositions;
@@ -56,12 +59,14 @@ public class townGeneration : MonoBehaviour
 
     // the size of the object to be spawned and the list of objects that can be spawned
     public GameObject[] objectPrefabs;
+    public GameObject[] tempObjectPrefabs;
     private Vector3 objectBounds;
     private List<GameObject> allObjectsInScene;
     
 
     void Start()
     {
+        updatePrefabs();
         allTilePositions = new List<Vector3>();
         allObjectsInScene = new List<GameObject>();
         allRays = new List<List<Vector3>>();
@@ -85,6 +90,26 @@ public class townGeneration : MonoBehaviour
         else
         {
             setPlayerPrefs(0, 0, 0, 0);
+        }
+    }
+
+    private void updatePrefabs()
+    {
+        var all = Resources.LoadAll<GameObject>("Prefabs");
+        objectPrefabs = new GameObject[all.Length];
+        int i = 0;
+        foreach (var x in all)
+        {
+            try
+            {
+                objectPrefabs[i] = (GameObject)x;
+            }
+            catch (Exception)
+            {
+                print($"Object {x} of type {x.GetType()} failed to convert to GameObject");
+                //throw;
+            }
+            i++;
         }
     }
 
@@ -160,11 +185,6 @@ public class townGeneration : MonoBehaviour
     public List<Vector3> getAllTilePositions()
     {
         return allTilePositions;
-    }
-
-    void Update()
-    {
-        drawObjectRay(objectPrefabs[0], Quaternion.identity);
     }
 
     private void drawRoadRay()

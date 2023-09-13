@@ -16,7 +16,19 @@ MonoBehaviour:
   templateName: Export map empty
   description: 
   preview: {fileID: 0}
-  dependencies: []
+  dependencies:
+  - dependency: {fileID: 15600000, guid: 92f7094faa9d58f4b9edd438a8579492, type: 2}
+    instantiationMode: 1
+  - dependency: {fileID: 2800000, guid: ef5c51cfa2ce46043a41a376b560c525, type: 3}
+    instantiationMode: 0
+  - dependency: {fileID: 8574412962073106934, guid: cacff3217cc23a04991f3f40257c7d01, type: 2}
+    instantiationMode: 1
+  - dependency: {fileID: 6928074976295879651, guid: dc999fcb6ea004948b6f5a0b934341a1, type: 3}
+    instantiationMode: 0
+  - dependency: {fileID: 8574412962073106934, guid: 0deb0a29f3ee7a14d939f7322021cb1c, type: 2}
+    instantiationMode: 1
+  - dependency: {fileID: 2800000, guid: 4056084b9d2ffdc478d82e42612231a7, type: 3}
+    instantiationMode: 0
   templatePipeline: {fileID: 0}
   badge: {fileID: 0}
   addToDefaults: 0

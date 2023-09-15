@@ -329,9 +329,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d6248ed756b8f943b8b917b2376aa88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  t: {fileID: 6928074976384781831}
-  empty: {fileID: 883915291}
-  meshFilter: {fileID: 0}
+  defaultTexture: {fileID: 2800000, guid: 4056084b9d2ffdc478d82e42612231a7, type: 3}
 --- !u!4 &1223050302
 Transform:
   m_ObjectHideFlags: 0

@@ -23,7 +23,7 @@ public class exportScene : MonoBehaviour
         terrainGameObject.transform.SetParent(allObjs.transform);
 
         // get default filepath for project and export Parent Gameobject (and all children) to FBX
-        string filePath = Path.Combine(Application.dataPath, "Map.fbx");
+        string filePath = Path.Combine($"{Application.dataPath}/Resources/Maps/", "Map.fbx");
         ModelExporter.ExportObject(filePath, allObjs);
         Debug.Log($"Successful FBX Export in {filePath}");
     }
@@ -49,6 +49,7 @@ public class exportScene : MonoBehaviour
     {
         // create empty gameobject and assign it mesh generated from Terrain
         GameObject newTerrain = new GameObject();
+        newTerrain.name = "Terrain";
         newTerrain.transform.position = t.GetPosition();
         newTerrain.AddComponent<MeshFilter>().mesh = generateMeshFromTerrain(t, 100);
         newTerrain.AddComponent<MeshRenderer>();

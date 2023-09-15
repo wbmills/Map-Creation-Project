@@ -191,28 +191,24 @@ public class loadTown : MonoBehaviour
     public void loadFBX()
     {
         FBXFile = fbxNameInputField.text;
-
-        try
+        PlayerPrefs.SetString("lastFbxFile", FBXFile);
+        GameObject parent = (GameObject)Resources.Load($"Maps/{FBXFile}");
+        parent = Instantiate(parent, Vector3.zero, Quaternion.identity);
+        Terrain t = FindFirstObjectByType<Terrain>();
+        if (t != null)
         {
-            GameObject parent = Resources.Load<GameObject>($"Maps/{FBXFile}");
-            Terrain t = FindFirstObjectByType<Terrain>();
-            if (t != null)
-            {
-                t.gameObject.SetActive(false);
-            }
-
-            tgScript.killMap();
-            GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
-            if (curParentOb != null)
-            {
-                Destroy(curParentOb);
-            }
-
-            parent.transform.position = Vector3.zero;
+            t.gameObject.SetActive(false);
         }
-        catch (System.Exception)
+
+        tgScript.killMap();
+        GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
+        if (curParentOb != null)
         {
-            print("File Doesn't Exist");
+            Destroy(curParentOb);
         }
+
+        parent.name = "Object Parent";
+        parent.tag = "Object Parent";
+        parent.transform.Find("Terrain").gameObject.layer = 2;
     }
 }

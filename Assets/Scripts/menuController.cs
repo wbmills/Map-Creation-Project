@@ -39,12 +39,10 @@ public class menuController : MonoBehaviour
         {
             PlayerPrefs.SetString("lastFbxFile", "default.fbx");
         }
+
         currentMenu = null;
         menuArr = GameObject.FindGameObjectsWithTag("Menu");
-        foreach(GameObject menu in menuArr)
-        {
-            menu.SetActive(false);
-        }
+        endAllMenus();
         pmScript = gameObject.GetComponent<playerMovement>();
         tgScript = gameObject.GetComponent<townGeneration>();
         ltScript = gameObject.GetComponent<loadTown>();
@@ -71,6 +69,14 @@ public class menuController : MonoBehaviour
     public void setMenuStatus(bool status)
     {
         menuStatus = status;
+    }
+
+    public void endAllMenus()
+    {
+        foreach (GameObject menu in menuArr)
+        {
+            menu.SetActive(false);
+        }
     }
 
     public void setMenu(string menuChoice)

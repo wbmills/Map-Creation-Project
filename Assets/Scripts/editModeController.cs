@@ -56,13 +56,64 @@ public class editModeController : MonoBehaviour
             {KeyCode.Equals, "zoomIn" },
             {KeyCode.Minus, "zoomOut" },
             {KeyCode.R, "rotateObject" },
-            {KeyCode.Backspace, "deleteCurrentObject" },
+            {KeyCode.Q, "deleteCurrentObject" },
             {KeyCode.Mouse1, "outputCurHit" },
-            {KeyCode.Return, "spawnObject" },
+            {KeyCode.E, "spawnObject" },
             {KeyCode.Mouse2, "saveToFBX" },
             {KeyCode.Slash, "updatePrefabs" },
-            {KeyCode.Alpha1, "changePrefabSelection" }
+            {KeyCode.Alpha1, "changePrefabSelection" },
+            {KeyCode.Comma, "makeObjectSmaller" },
+            {KeyCode.Period, "makeObjectBigger" },
+            {KeyCode.Backspace, "playerSwitch" }
         };
+    }
+
+    private void playerSwitch()
+    {
+        cameraController camCon = sceneController.GetComponent<cameraController>();
+        if (camCon.currentCamera.name == "EditModeCamera")
+        {
+            camCon.setCamera("Main Camera");
+        }
+        else if (camCon.currentCamera.name == "Main Camera")
+        {
+            camCon.setCamera("EditModeCamera");
+        }
+        
+    }
+
+    private void makeObjectBigger()
+    {
+        var scale = curSceneObject.transform.localScale;
+        if (curSceneObject.name.Contains("Wall"))
+        {
+            scale = new Vector3(scale.x + 2, scale.y, scale.z);
+        }
+        else if (curSceneObject != null)
+        {
+            scale = new Vector3(scale.x + .5f, scale.y + .5f, scale.z + .5f);
+        }
+        curSceneObject.transform.localScale = scale;
+        moveObject();
+    }
+
+    private void makeObjectSmaller()
+    {
+        var scale = curSceneObject.transform.localScale;
+        if (curSceneObject.name.Contains("Wall"))
+        {
+            scale = new Vector3(scale.x - 2, scale.y, scale.z);
+        }
+        else if (curSceneObject != null)
+        {
+            scale = new Vector3(scale.x - .5f, scale.y - .5f, scale.z - .5f);
+        }
+        if (scale.x > 0 && scale.y > 0 && scale.z > 0)
+        {
+            curSceneObject.transform.localScale = scale;
+        }
+
+        moveObject();
     }
 
     private void changePrefabSelection()
@@ -109,7 +160,9 @@ public class editModeController : MonoBehaviour
 
         // spotlight follows mouse
         curMousePos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.transform.position.y));
-        spotlight.transform.position = new Vector3(curMousePos.x, 5f, curMousePos.z);
+        spotlight.transform.position = new Vector3(curMousePos.x, 
+            terrain.SampleHeight(new Vector3(curMousePos.x, 0, curMousePos.z)), 
+            curMousePos.z);
 
         // select scene object to move it
         if (Input.GetKeyDown(KeyCode.Mouse0) && curSceneObject == null)
@@ -118,7 +171,7 @@ public class editModeController : MonoBehaviour
         }
 
         // place currently holding object
-        else if (Input.GetKeyDown(KeyCode.Mouse0) && curSceneObject != null)
+        else if ((Input.GetKeyDown(KeyCode.Mouse0) | Input.GetKeyDown(KeyCode.F)) && curSceneObject != null)
         {
             curSceneObject.transform.position = new Vector3(curSceneObject.transform.position.x,
                 terrain.SampleHeight(curSceneObject.transform.position),
@@ -160,7 +213,8 @@ public class editModeController : MonoBehaviour
     private void moveObject()
     {
         mousePosinWorld = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.y));
-        curSceneObject.transform.position = new Vector3(mousePosinWorld.x, .003f, mousePosinWorld.z);
+        curSceneObject.transform.position = new Vector3(mousePosinWorld.x,
+            terrain.SampleHeight(curSceneObject.transform.position), mousePosinWorld.z);
     }
 
     public void callSpawn()

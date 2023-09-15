@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class MenuInput
 {
@@ -13,6 +14,7 @@ public class MenuInput
 
 public class menuController : MonoBehaviour
 {
+    public TMP_InputField fbxInputFileName;
     private MenuInput menuInput;
     private GameObject[] menuArr;
     private bool menuStatus;
@@ -29,6 +31,14 @@ public class menuController : MonoBehaviour
 
     void Start()
     {
+        if (PlayerPrefs.HasKey("lastFbxFile"))
+        {
+            fbxInputFileName.text = PlayerPrefs.GetString("lastFbxFile");
+        }
+        else
+        {
+            PlayerPrefs.SetString("lastFbxFile", "default.fbx");
+        }
         currentMenu = null;
         menuArr = GameObject.FindGameObjectsWithTag("Menu");
         foreach(GameObject menu in menuArr)

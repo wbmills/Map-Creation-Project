@@ -4,15 +4,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.IO;
+using TMPro;
 
 public class loadTown : MonoBehaviour
 {
     public bool autosave;
     private townGeneration tgScript;
     public string file;
+    public string FBXFile;
     private List<Vector3> allTilePositions;
     private List<string> saveOptions;
     public Dropdown saveOptionsDropdown;
+    public TMP_InputField fbxNameInputField;
     public class ObjectInformation
     {
         // all columns for file
@@ -32,6 +35,7 @@ public class loadTown : MonoBehaviour
         autosave = false;
         saveOptions = new List<string>() { "Save 1", "Save 2", "Save 3" };
         file = saveOptions[0];
+        FBXFile = fbxNameInputField.text;
         tgScript = GameObject.Find("EditModeController").GetComponent<townGeneration>();
     }
 
@@ -182,5 +186,33 @@ public class loadTown : MonoBehaviour
         }
         tgScript.terrainPainter(allTilePositions);
         print("Load Complete.");
+    }
+
+    public void loadFBX()
+    {
+        FBXFile = fbxNameInputField.text;
+
+        try
+        {
+            GameObject parent = Resources.Load<GameObject>($"Maps/{FBXFile}");
+            Terrain t = FindFirstObjectByType<Terrain>();
+            if (t != null)
+            {
+                t.gameObject.SetActive(false);
+            }
+
+            tgScript.killMap();
+            GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
+            if (curParentOb != null)
+            {
+                Destroy(curParentOb);
+            }
+
+            parent.transform.position = Vector3.zero;
+        }
+        catch (System.Exception)
+        {
+            print("File Doesn't Exist");
+        }
     }
 }

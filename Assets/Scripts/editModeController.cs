@@ -17,6 +17,7 @@ public class editModeController : MonoBehaviour
     public Dropdown prefabList;
     private GameObject sceneController;
     private GameObject tempCollision;
+    private GameObject lastObject;
 
     private float scrollSensitivity = 80f;
     private loadTown ltScript;
@@ -25,6 +26,7 @@ public class editModeController : MonoBehaviour
     private Dictionary<KeyCode, string> buttons;
     private GameObject[] objectPrefabs;
     private Vector3 curMousePos;
+    private cameraController camCon;
 
     void Start()
     {
@@ -34,8 +36,14 @@ public class editModeController : MonoBehaviour
         pmScript = sceneController.GetComponent<playerMovement>();
         tgScript = gameObject.GetComponent<townGeneration>();
         ltScript = sceneController.GetComponent<loadTown>();
+        camCon = sceneController.GetComponent<cameraController>();
         updatePrefabs();
         setButtons();
+    }
+
+    public void callUpdatePrefabs()
+    {
+        updatePrefabs();
     }
 
     private void updatePrefabs()
@@ -48,6 +56,14 @@ public class editModeController : MonoBehaviour
         }
         prefabList.ClearOptions();
         prefabList.AddOptions(tempList);
+    }
+
+    private void retrieveLastObject()
+    {
+        if (lastObject != null)
+        {
+            curSceneObject = lastObject;
+        }
     }
 
     private void setButtons()
@@ -64,20 +80,23 @@ public class editModeController : MonoBehaviour
             {KeyCode.Alpha1, "changePrefabSelection" },
             {KeyCode.Comma, "makeObjectSmaller" },
             {KeyCode.Period, "makeObjectBigger" },
-            {KeyCode.Backspace, "playerSwitch" }
+            {KeyCode.Backspace, "playerSwitch" },
+            {KeyCode.Z, "retrieveLastObject" }
         };
     }
 
     private void playerSwitch()
     {
-        cameraController camCon = sceneController.GetComponent<cameraController>();
         if (camCon.currentCamera.name == "EditModeCamera")
         {
+            GameObject.Find("FirstPersonController").GetComponent<playerController>().setCanMove(true);
             camCon.setCamera("Main Camera");
+            
         }
         else if (camCon.currentCamera.name == "Main Camera")
         {
             camCon.setCamera("EditModeCamera");
+            GameObject.Find("FirstPersonController").GetComponent<playerController>().setCanMove(false);
         }
         
     }
@@ -85,7 +104,7 @@ public class editModeController : MonoBehaviour
     private void makeObjectBigger()
     {
         var scale = curSceneObject.transform.localScale;
-        if (curSceneObject.name.Contains("Wall"))
+        if (curSceneObject.name.Contains("Wall") | curSceneObject.name.Contains("Floor"))
         {
             scale = new Vector3(scale.x + 2, scale.y, scale.z);
         }
@@ -100,7 +119,7 @@ public class editModeController : MonoBehaviour
     private void makeObjectSmaller()
     {
         var scale = curSceneObject.transform.localScale;
-        if (curSceneObject.name.Contains("Wall"))
+        if (curSceneObject.name.Contains("Wall") | curSceneObject.name.Contains("Floor"))
         {
             scale = new Vector3(scale.x - 2, scale.y, scale.z);
         }
@@ -145,11 +164,14 @@ public class editModeController : MonoBehaviour
             }
         }
 
-        transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
-        transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
-        transform.Translate(Input.GetAxis("Mouse ScrollWheel") * Vector3.forward * scrollSensitivity);
+        if (camCon.getCurrentCamera() == "EditModeCamera")
+        {
+            transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
+            transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
+            transform.Translate(Input.GetAxis("Mouse ScrollWheel") * Vector3.forward * scrollSensitivity);
+        }
 
-        if (sceneController.GetComponent<cameraController>().getCurrentCamera() == "EditModeCamera")
+        if (camCon.getCurrentCamera() == "EditModeCamera")
         {
             spotlight.SetActive(true);
         }
@@ -173,6 +195,7 @@ public class editModeController : MonoBehaviour
         // place currently holding object
         else if ((Input.GetKeyDown(KeyCode.Mouse0) | Input.GetKeyDown(KeyCode.F)) && curSceneObject != null)
         {
+            lastObject = curSceneObject;
             curSceneObject.transform.position = new Vector3(curSceneObject.transform.position.x,
                 terrain.SampleHeight(curSceneObject.transform.position),
                 curSceneObject.transform.position.z);

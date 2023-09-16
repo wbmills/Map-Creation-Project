@@ -101,22 +101,23 @@ public class loadTown : MonoBehaviour
         print("Saving...");
         setFile();
         clearCSV();
-        GameObject[] allBuldings = GameObject.FindGameObjectsWithTag("Building");
-        GameObject[] allTrees = GameObject.FindGameObjectsWithTag("Tree");
-        GameObject[] allExtras = GameObject.FindGameObjectsWithTag("Details");
-        GameObject[] allWalls = GameObject.FindGameObjectsWithTag("Walls");
-        List<GameObject[]> allObjs = new List<GameObject[]>() {allBuldings, allTrees, allExtras, allWalls};
+
+        List<GameObject> allObjs = new List<GameObject>();
+        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
+
+        for (int i = 0; i < parentOb.transform.childCount; i++)
+        {
+            allObjs.Add(parentOb.transform.GetChild(i).gameObject);
+        }
 
         writeCSV("name,positionX,positionY,positionZ,rotationX,rotationY,rotationZ");
-        foreach(GameObject[] objArr in allObjs)
+
+        foreach (GameObject obj in allObjs)
         {
-            foreach (GameObject obj in objArr)
-            {
-                Vector3 pos = obj.transform.position;
-                Vector3 rot = obj.transform.rotation.eulerAngles;
-                string objInfoString = $"{obj.name},{pos.x},{pos.y},{pos.z},{rot.x},{rot.y},{rot.z}";
-                writeCSV(objInfoString);
-            }
+            Vector3 pos = obj.transform.position;
+            Vector3 rot = obj.transform.rotation.eulerAngles;
+            string objInfoString = $"{obj.name},{pos.x},{pos.y},{pos.z},{rot.x},{rot.y},{rot.z}";
+            writeCSV(objInfoString);
         }
 
         Terrain t = Terrain.activeTerrain;

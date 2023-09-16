@@ -6,16 +6,21 @@ public class playerController : MonoBehaviour
 {
     public GameObject player;
     public bool canMove;
-    public float speed = 10f;
+    public float speed;
     private float rotMult = 4f;
     private float yaw = 0f;
     private float pitch = 0f;
     private float maxY = -65;
     private float minY = 50;
+    private float sprintSpeed;
+    private float baseSpeed;
 
 
     void Start()
     {
+        baseSpeed = 10f;
+        sprintSpeed = baseSpeed * 2f;
+        speed = baseSpeed;
         player = GameObject.Find("Player");   
     }
 
@@ -41,6 +46,15 @@ public class playerController : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 jump();
+            }
+
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                speed = sprintSpeed;
+            }
+            else if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                speed = baseSpeed;
             }
         }
     }

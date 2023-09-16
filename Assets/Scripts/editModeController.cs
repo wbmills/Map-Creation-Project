@@ -91,12 +91,15 @@ public class editModeController : MonoBehaviour
         {
             GameObject.Find("FirstPersonController").GetComponent<playerController>().setCanMove(true);
             camCon.setCamera("Main Camera");
-            
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
         }
         else if (camCon.currentCamera.name == "Main Camera")
         {
             camCon.setCamera("EditModeCamera");
             GameObject.Find("FirstPersonController").GetComponent<playerController>().setCanMove(false);
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
         
     }
@@ -166,14 +169,10 @@ public class editModeController : MonoBehaviour
 
         if (camCon.getCurrentCamera() == "EditModeCamera")
         {
+            spotlight.SetActive(true);
             transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
             transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
             transform.Translate(Input.GetAxis("Mouse ScrollWheel") * Vector3.forward * scrollSensitivity);
-        }
-
-        if (camCon.getCurrentCamera() == "EditModeCamera")
-        {
-            spotlight.SetActive(true);
         }
         else
         {

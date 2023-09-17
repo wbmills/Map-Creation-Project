@@ -2863,6 +2863,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EditModeController
       objectReference: {fileID: 0}
+    - target: {fileID: 2967549487514643543, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
+      propertyPath: wall
+      value: 
+      objectReference: {fileID: 6762096231988828998, guid: 6cb3f256699e1f143b516af7289c78ee, type: 3}
     - target: {fileID: 2967549487580890400, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
       propertyPath: m_Interactable
       value: 1

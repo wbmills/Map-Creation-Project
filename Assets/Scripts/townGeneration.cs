@@ -348,10 +348,11 @@ public class townGeneration : MonoBehaviour
             {
                 GameObject conLeft2 = tempRayInfo.collider.transform.Find("conLeft").gameObject;
                 allRays.Add(new List<Vector3>() { conRight.transform.position, conLeft2.transform.position });
-                //GameObject tempObj = Instantiate(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0));
-                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), null, true);
+
+                drawWall(wallObject, conLeft2, conRight);
+
+/*                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), null, true);
                 tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
-                
                 // sqrt((x1 - x2)^2 + (z1 - z2)^2) = length of wall
                 float tempX = Mathf.Sqrt(squareNum(conRight.transform.position.x - conLeft2.transform.position.x) + squareNum(conRight.transform.position.z - conLeft2.transform.position.z));
              
@@ -363,9 +364,28 @@ public class townGeneration : MonoBehaviour
                 Vector3 dir = conLeft2.transform.position - conRight.transform.position;
                 var rot = Quaternion.LookRotation(dir, Vector3.up);
                 tempObj.transform.rotation = rot;
-                tempObj.transform.Rotate(0, 90, 0);
+                tempObj.transform.Rotate(0, 90, 0);*/
             }
         }
+    }
+
+    public void drawWall(GameObject wallObject, GameObject conLeft2, GameObject conRight)
+    {
+        GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), null, true);
+        tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
+        
+        // sqrt((x1 - x2)^2 + (z1 - z2)^2) = length of wall
+        float tempX = Mathf.Sqrt(squareNum(conRight.transform.position.x - conLeft2.transform.position.x) + squareNum(conRight.transform.position.z - conLeft2.transform.position.z));
+
+        tempObj.transform.localScale = new Vector3(tempX, tempObj.transform.localScale.y, tempObj.transform.localScale.z);
+
+        Vector3 difference = (conLeft2.transform.position - conRight.transform.position) / 2;
+        Vector3 newPos = new Vector3(conRight.transform.position.x + difference.x, conRight.transform.position.y, conRight.transform.position.z + difference.z);
+        tempObj.transform.position = newPos;
+        Vector3 dir = conLeft2.transform.position - conRight.transform.position;
+        var rot = Quaternion.LookRotation(dir, Vector3.up);
+        tempObj.transform.rotation = rot;
+        tempObj.transform.Rotate(0, 90, 0);
     }
 
     private void spawnWhereSpace(string filterTag, int maxNum)

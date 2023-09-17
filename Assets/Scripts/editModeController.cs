@@ -18,6 +18,8 @@ public class editModeController : MonoBehaviour
     private GameObject sceneController;
     private GameObject tempCollision;
     private GameObject lastObject;
+    private Vector3 terrainBounds;
+    public GameObject wall;
 
     private float scrollSensitivity = 80f;
     private loadTown ltScript;
@@ -27,10 +29,12 @@ public class editModeController : MonoBehaviour
     private GameObject[] objectPrefabs;
     private Vector3 curMousePos;
     private cameraController camCon;
+    private Vector3 spotlightPosition;
 
     void Start()
     {
         terrain = GameObject.FindAnyObjectByType<Terrain>();
+        terrainBounds = terrain.terrainData.size;
         curSceneObject = null;
         sceneController = GameObject.Find("SceneManager");
         pmScript = sceneController.GetComponent<playerMovement>();
@@ -81,7 +85,8 @@ public class editModeController : MonoBehaviour
             {KeyCode.Comma, "makeObjectSmaller" },
             {KeyCode.Period, "makeObjectBigger" },
             {KeyCode.Backspace, "playerSwitch" },
-            {KeyCode.Z, "retrieveLastObject" }
+            {KeyCode.Z, "retrieveLastObject" },
+            { KeyCode.LeftShift, "connectWalls" },
         };
     }
 
@@ -156,6 +161,22 @@ public class editModeController : MonoBehaviour
         transform.GetComponent<exportScene>().ExportMapAsFBX(parentOb);
     }
 
+    private bool checkInTerrain(GameObject ob)
+    {
+        bool check;
+        Vector3 obPos = ob.transform.position;
+        if (obPos.x < terrainBounds.x && obPos.x > 0 && obPos.z < terrainBounds.z && obPos.z > 0)
+        {
+            check = true;
+        }
+        else
+        {
+            check = false;
+        }
+
+        return check;
+    }
+
     void Update()
     {
         foreach (var buttonMethodDict in buttons)
@@ -167,7 +188,9 @@ public class editModeController : MonoBehaviour
             }
         }
 
-        if (camCon.getCurrentCamera() == "EditModeCamera")
+        spotlightPosition = spotlight.transform.position;
+
+        if (camCon.getCurrentCamera() == "EditModeCamera" && checkInTerrain(spotlight))
         {
             spotlight.SetActive(true);
             transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
@@ -215,7 +238,47 @@ public class editModeController : MonoBehaviour
 
     private void connectWalls()
     {
-        // select two buildings and spawn wall between them
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            GameObject con1 = null;
+            GameObject con2 = null;
+            List<GameObject> conList = new List<GameObject>();
+            foreach(Transform child in lastObject.transform)
+            {
+                if (child.name.Contains("con"))
+                {
+                    conList.Add(child.gameObject);
+                }
+            }
+
+            foreach (Transform child in curSceneObject.transform)
+            {
+                if (child.name.Contains("con"))
+                {
+                    conList.Add(child.gameObject);
+                }
+            }
+
+            float leastDistance = 0;
+            float curDistance;
+            foreach (GameObject curPos1 in conList)
+            {
+                foreach (GameObject curPos2 in conList)
+                {
+                    curDistance = Vector3.Distance(curPos1.transform.position, curPos2.transform.position);
+                    if ((leastDistance == 0 | curDistance < leastDistance) && (curPos1.transform.parent != curPos2.transform.parent))
+                    {
+                        leastDistance = curDistance;
+                        con1 = curPos1;
+                        con2 = curPos2;
+                    }
+                }
+            }
+            if (con1 && con2)
+            {
+                tgScript.drawWall(wall, con1, con2);
+            }
+        }
     }
 
     private int getSelection()

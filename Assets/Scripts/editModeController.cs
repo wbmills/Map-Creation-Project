@@ -20,11 +20,13 @@ public class editModeController : MonoBehaviour
     private GameObject lastObject;
     private Vector3 terrainBounds;
     public GameObject wall;
+    public TMP_InputField fileNameInput;
 
     private float scrollSensitivity = 80f;
     private loadTown ltScript;
     private playerMovement pmScript;
     private townGeneration tgScript;
+    private exportScene exportSceneScript;
     private Dictionary<KeyCode, string> buttons;
     private GameObject[] objectPrefabs;
     private Vector3 curMousePos;
@@ -33,6 +35,7 @@ public class editModeController : MonoBehaviour
 
     void Start()
     {
+        exportSceneScript = GetComponent<exportScene>();
         terrain = GameObject.FindAnyObjectByType<Terrain>();
         terrainBounds = terrain.terrainData.size;
         curSceneObject = null;
@@ -79,7 +82,7 @@ public class editModeController : MonoBehaviour
             {KeyCode.Q, "deleteCurrentObject" },
             {KeyCode.Mouse1, "outputCurHit" },
             {KeyCode.E, "spawnObject" },
-            {KeyCode.Mouse2, "saveToFBX" },
+            {KeyCode.Mouse2, "callExporttoFBX" },
             {KeyCode.Slash, "updatePrefabs" },
             {KeyCode.Alpha1, "changePrefabSelection" },
             {KeyCode.Comma, "makeObjectSmaller" },
@@ -153,12 +156,6 @@ public class editModeController : MonoBehaviour
         {
             prefabList.value = 0;
         }
-    }
-
-    private void saveToFBX()
-    {
-        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
-        transform.GetComponent<exportScene>().ExportMapAsFBX(parentOb);
     }
 
     private bool checkInTerrain(GameObject ob)
@@ -335,5 +332,17 @@ public class editModeController : MonoBehaviour
             tempCollision = ob;
         }
         tempCollision = ob;
+    }
+
+    public void callExporttoFBX()
+    {
+        GameObject obParent = GameObject.FindGameObjectWithTag("Object Parent");
+        string fileName = fileNameInput.text;
+        if (fileName == null)
+        {
+            fileName = PlayerPrefs.GetString("lastFbxFile");
+        }
+        exportSceneScript.ExportMapAsFBX(obParent, fileName);
+
     }
 }

@@ -14,4 +14,10 @@ public class onLaunch : MonoBehaviour
         camCon = sceneManager.GetComponent<cameraController>();
         menuCon = sceneManager.GetComponent<menuController>();
     }
+
+    public void quitGame()
+    {
+        print("Quitting...");
+        Application.Quit();
+    }
 }

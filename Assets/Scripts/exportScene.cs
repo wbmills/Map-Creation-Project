@@ -9,9 +9,8 @@ public class exportScene : MonoBehaviour
 {
     public GameObject playerPrefab;
     public GameObject sceneTemplate;
-    public Texture defaultTexture;
 
-    public void ExportMapAsFBX(GameObject parentObj)
+    public void ExportMapAsFBX(GameObject parentObj, string fileName = "default")
     {
         // get all objects attached to parent gameobject
         GameObject allObjs = GameObject.FindGameObjectWithTag("Object Parent");
@@ -23,7 +22,7 @@ public class exportScene : MonoBehaviour
         terrainGameObject.transform.SetParent(allObjs.transform);
 
         // get default filepath for project and export Parent Gameobject (and all children) to FBX
-        string filePath = Path.Combine($"{Application.dataPath}/Resources/Maps/", "Map.fbx");
+        string filePath = Path.Combine($"{Application.dataPath}/Resources/Maps/", $"{fileName}.fbx");
         ModelExporter.ExportObject(filePath, allObjs);
         Debug.Log($"Successful FBX Export in {filePath}");
     }

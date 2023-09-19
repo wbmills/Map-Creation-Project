@@ -34,7 +34,15 @@ public class cameraController : MonoBehaviour
 
     public string getCurrentCamera()
     {
-        return currentCamera.name;
+        if (currentCamera)
+        {
+            return currentCamera.name;
+        }
+        else
+        {
+            return "None";
+        }
+        
     }
     private void setMouseLocked()
     {

@@ -8,6 +8,7 @@ using TMPro;
 
 public class loadTown : MonoBehaviour
 {
+    public utils utilsScript;
     public bool autosave;
     private townGeneration tgScript;
     public string file;
@@ -32,6 +33,7 @@ public class loadTown : MonoBehaviour
 
     void Start()
     {
+        utilsScript = GameObject.Find("SceneManager").GetComponent<utils>();
         autosave = false;
         saveOptions = new List<string>() { "Save 1", "Save 2", "Save 3" };
         file = saveOptions[0];
@@ -133,25 +135,7 @@ public class loadTown : MonoBehaviour
     public void loadObjects()
     {
         print("loading...");
-        tgScript.killMap();
-        GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
-        for(int i=0; i < parentOb.transform.childCount; i++)
-        {
-            Destroy(parentOb.transform.GetChild(i).gameObject);
-        }
-/*        GameObject[] allBuldings = GameObject.FindGameObjectsWithTag("Building");
-        GameObject[] allTrees = GameObject.FindGameObjectsWithTag("Tree");
-        GameObject[] allExtras = GameObject.FindGameObjectsWithTag("Details");
-        GameObject[] allWalls = GameObject.FindGameObjectsWithTag("Walls");
-        List<GameObject[]> allObjs = new List<GameObject[]>() { allBuldings, allTrees, allExtras, allWalls };
-        foreach(GameObject[] objs in allObjs)
-        {
-            foreach(GameObject obj in objs)
-            {
-                Destroy(obj);
-            }
-        }*/
-
+        utilsScript.killMap();
         GameObject[] objectPrefabs = tgScript.objectPrefabs;
         Dictionary<string, GameObject> obDict = new Dictionary<string, GameObject>();
         allTilePositions = new List<Vector3>();
@@ -175,10 +159,10 @@ public class loadTown : MonoBehaviour
             }
             else if (obDict.ContainsKey(n))
             {
-                    GameObject tempOb = obDict[n];
-                    Vector3 tempPos = new Vector3(ob.positionX, ob.positionY, ob.positionZ);
-                    Quaternion tempRot = Quaternion.Euler(ob.rotationX, ob.rotationY, ob.rotationZ);
-                    tgScript.instantiateObject(tempOb, tempPos, tempRot, null, true);
+                GameObject tempOb = obDict[n];
+                Vector3 tempPos = new Vector3(ob.positionX, ob.positionY, ob.positionZ);
+                Quaternion tempRot = Quaternion.Euler(ob.rotationX, ob.rotationY, ob.rotationZ);
+                GameObject tempInstance = tgScript.instantiateObject(tempOb, tempPos, tempRot, null, true);
             }
             else
             {
@@ -191,26 +175,22 @@ public class loadTown : MonoBehaviour
 
     public void loadFBX()
     {
+        utilsScript.killMap();
         FBXFile = fbxNameInputField.text;
         PlayerPrefs.SetString("lastFbxFile", FBXFile);
         GameObject parent = (GameObject)Resources.Load($"Maps/{FBXFile}");
         parent = Instantiate(parent, Vector3.zero, Quaternion.identity);
-        Terrain t = FindFirstObjectByType<Terrain>();
-        if (t != null)
-        {
-            t.gameObject.SetActive(false);
-        }
-
-        tgScript.killMap();
-        GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
+/*        GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
         if (curParentOb != null)
         {
             Destroy(curParentOb);
-        }
+        }*/
 
         parent.name = "Object Parent";
         parent.tag = "Object Parent";
-        parent.transform.Find("Terrain").gameObject.layer = 2;
+        //parent.transform.Find("Terrain").gameObject.layer = 2;
+        Destroy(parent.transform.Find("Terrain").gameObject);
+        tgScript.spawnEmptyMap();
 
         setComponents(parent);
     }
@@ -235,6 +215,5 @@ public class loadTown : MonoBehaviour
         BoxCollider bc = ob.GetComponent<BoxCollider>();
         //bc.center = ob.transform.position;
         bc.size = size;
-
     }
 }

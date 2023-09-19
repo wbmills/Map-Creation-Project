@@ -49,6 +49,7 @@ public class exportScene : MonoBehaviour
         // create empty gameobject and assign it mesh generated from Terrain
         GameObject newTerrain = new GameObject();
         newTerrain.name = "Terrain";
+        newTerrain.tag = "Terrain";
         newTerrain.transform.position = t.GetPosition();
         newTerrain.AddComponent<MeshFilter>().mesh = generateMeshFromTerrain(t, 100);
         newTerrain.AddComponent<MeshRenderer>();

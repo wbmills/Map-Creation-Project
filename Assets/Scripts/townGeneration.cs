@@ -15,12 +15,11 @@ public class townGeneration : MonoBehaviour
     public TMP_InputField treeNum;
     public TMP_InputField extrasNum;
     public TMP_InputField roadSize;
+    private utils utilsScript;
 
     // for the road tiles
     public GameObject emptyPrefab;
-
     public List<Vector3> allTilePositions;
-
     private List<List<Vector3>> allRays;
 
     // GameObjects used in object spawning and road generation
@@ -67,18 +66,13 @@ public class townGeneration : MonoBehaviour
     void Start()
     {
         updatePrefabs();
+        utilsScript = GameObject.Find("SceneManager").GetComponent<utils>();
         allTilePositions = new List<Vector3>();
         allObjectsInScene = new List<GameObject>();
         allRays = new List<List<Vector3>>();
         objectPlacer = GameObject.FindGameObjectWithTag("Object Placer");
+        //spawnEmptyMap();
 
-        // getting terrain bounds
-        terrain = GameObject.FindAnyObjectByType<Terrain>();
-        boundsX = new List<float> {terrain.transform.position.x, terrain.transform.position.x + terrain.terrainData.size.x };
-        boundsZ = new List<float> {terrain.transform.position.z, terrain.transform.position.z + terrain.terrainData.size.z };
-        
-
-        // set default values for menu, or create new ones if none exist
         if (PlayerPrefs.HasKey("houseNum"))
         {
             int[] prefs = getPlayerPrefs();
@@ -113,28 +107,18 @@ public class townGeneration : MonoBehaviour
         }
     }
 
-    public void killMap()
+    public Terrain getCurrentTerrain()
     {
-        float[,,] splatmapData = terrain.terrainData.GetAlphamaps(0, 0, terrain.terrainData.alphamapWidth, terrain.terrainData.alphamapHeight);
-        for (int y = 0; y < terrain.terrainData.alphamapHeight; y++)
-        {
-            for (int x = 0; x < terrain.terrainData.alphamapWidth; x++)
-            {
-                splatmapData[x, y, 0] = 1;
-                splatmapData[x, y, 1] = 0;
-            }
-        }
-        terrain.terrainData.SetAlphamaps(0, 0, splatmapData);
-
-        foreach (GameObject obj in allObjectsInScene)
-        {       
-                Destroy(obj);
-        }
+        return terrain;
     }
 
     public void spawnEmptyMap()
     {
-        instantiateObject(terrain.gameObject, Vector3.zero, Quaternion.identity, tag = "Terrain", true);
+        utilsScript.killMap();
+        terrain = instantiateObject(terrainToSpawn.gameObject, Vector3.zero, Quaternion.identity, tag = "Terrain", false).GetComponent<Terrain>();
+        terrain.gameObject.layer = 2;
+        boundsX = new List<float> { terrain.transform.position.x, terrain.transform.position.x + terrain.terrainData.size.x };
+        boundsZ = new List<float> { terrain.transform.position.z, terrain.transform.position.z + terrain.terrainData.size.z };
     }
 
     public void addToAllObjects(GameObject obj)
@@ -159,14 +143,10 @@ public class townGeneration : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    private void OnApplicationQuit()
-    {
-        killMap();
-    }
-
     public void generate()
     {
-        killMap();
+        utilsScript.killMap();
+        spawnEmptyMap();
         allTilePositions = new List<Vector3>();
         int houseNumString = Int32.Parse(houseNum.text);
         int treeNumString = Int32.Parse(treeNum.text);
@@ -301,7 +281,7 @@ public class townGeneration : MonoBehaviour
         {
             tempObj.transform.SetParent(parentOb.transform);
         }
-
+        //partsToWhole(tempObj);
         return tempObj;
     }
 
@@ -640,5 +620,50 @@ public class townGeneration : MonoBehaviour
         {
             return true;
         }
+    }
+
+
+    // method to produce one gameobject mesh from a parent with many parts
+    public GameObject partsToWhole(GameObject parent)
+    {
+        
+        List<CombineInstance> meshCombineList = new List<CombineInstance>();
+       
+        for (int i = 0; i < parent.transform.childCount; i++)
+        {
+            Transform tempChild = parent.transform.GetChild(i);
+            if (tempChild.TryGetComponent<MeshFilter>(out MeshFilter tempMeshFilter))
+            {
+                var tempCombineInstance = new CombineInstance();
+                tempCombineInstance.mesh = tempMeshFilter.sharedMesh;
+                tempCombineInstance.transform = tempChild.localToWorldMatrix;
+
+                meshCombineList.Add(tempCombineInstance);
+
+                Destroy(tempChild.GetComponent<MeshFilter>());
+                Destroy(tempChild.GetComponent<MeshRenderer>());
+            }
+        }
+
+        Mesh finalMesh = new Mesh();
+        CombineInstance[] meshCombine = new CombineInstance[meshCombineList.Count];
+        for (int i = 0; i < meshCombineList.Count; i++)
+        {
+            meshCombine[i] = meshCombineList[i];
+        }
+
+        finalMesh.CombineMeshes(meshCombine);
+        if (parent.TryGetComponent<MeshFilter>(out MeshFilter parentMeshFilter))
+        {
+            parentMeshFilter.sharedMesh = finalMesh;
+        }
+        else
+        {
+            parent.AddComponent<MeshFilter>().sharedMesh = finalMesh;
+            parent.AddComponent<MeshRenderer>();
+        }
+        parent.AddComponent<MeshCollider>().convex = true;
+
+        return parent;
     }
 }

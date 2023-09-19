@@ -21,6 +21,7 @@ public class editModeController : MonoBehaviour
     private Vector3 terrainBounds;
     public GameObject wall;
     public TMP_InputField fileNameInput;
+    private menuController menuCon;
 
     private float scrollSensitivity = 80f;
     private loadTown ltScript;
@@ -36,16 +37,25 @@ public class editModeController : MonoBehaviour
     void Start()
     {
         exportSceneScript = GetComponent<exportScene>();
-        terrain = GameObject.FindAnyObjectByType<Terrain>();
-        terrainBounds = terrain.terrainData.size;
         curSceneObject = null;
+        terrain = null;
         sceneController = GameObject.Find("SceneManager");
         pmScript = sceneController.GetComponent<playerMovement>();
-        tgScript = gameObject.GetComponent<townGeneration>();
         ltScript = sceneController.GetComponent<loadTown>();
         camCon = sceneController.GetComponent<cameraController>();
+        tgScript = gameObject.GetComponent<townGeneration>();
+        menuCon = GameObject.Find("Menu").GetComponent<menuController>();
         updatePrefabs();
         setButtons();
+    }
+
+    public void updateTerrainObject()
+    {
+        terrain = tgScript.getCurrentTerrain();
+        if (terrain)
+        {
+            terrainBounds = terrain.terrainData.size;
+        }
     }
 
     public void callUpdatePrefabs()
@@ -174,7 +184,7 @@ public class editModeController : MonoBehaviour
         return check;
     }
 
-    void Update()
+    private void runEditMode()
     {
         foreach (var buttonMethodDict in buttons)
         {
@@ -190,6 +200,7 @@ public class editModeController : MonoBehaviour
         if (camCon.getCurrentCamera() == "EditModeCamera" && checkInTerrain(spotlight))
         {
             spotlight.SetActive(true);
+            updateTerrainObject();
             transform.Translate(Input.GetAxis("Horizontal") * Vector3.right);
             transform.Translate(Input.GetAxis("Vertical") * Vector3.up);
             transform.Translate(Input.GetAxis("Mouse ScrollWheel") * Vector3.forward * scrollSensitivity);
@@ -201,8 +212,8 @@ public class editModeController : MonoBehaviour
 
         // spotlight follows mouse
         curMousePos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, cam.transform.position.y));
-        spotlight.transform.position = new Vector3(curMousePos.x, 
-            terrain.SampleHeight(new Vector3(curMousePos.x, 0, curMousePos.z)), 
+        spotlight.transform.position = new Vector3(curMousePos.x,
+            terrain.SampleHeight(new Vector3(curMousePos.x, 0, curMousePos.z)),
             curMousePos.z);
 
         // select scene object to move it
@@ -225,6 +236,19 @@ public class editModeController : MonoBehaviour
         if (curSceneObject != null)
         {
             moveObject();
+        }
+    }
+
+    void Update()
+    {
+        if (!terrain)
+        {
+            updateTerrainObject();
+        }
+        
+        if (terrain)
+        {
+            runEditMode();
         }
     }
 
@@ -327,11 +351,10 @@ public class editModeController : MonoBehaviour
 
     public void setCurrentCollisionObject(GameObject ob)
     {
-        if (tempCollision == null)
+        if (ob && terrain && ob.gameObject != terrain.gameObject)
         {
             tempCollision = ob;
         }
-        tempCollision = ob;
     }
 
     public void callExporttoFBX()

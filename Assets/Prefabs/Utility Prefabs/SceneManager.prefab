@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8487524476674145901}
   - component: {fileID: 8487524476674145900}
   - component: {fileID: 8487524476674145899}
-  - component: {fileID: 8487524476674145898}
+  - component: {fileID: 905283198146212131}
   m_Layer: 0
   m_Name: SceneManager
   m_TagString: Untagged
@@ -49,7 +49,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autosave: 0
   file: 
+  FBXFile: 
   saveOptionsDropdown: {fileID: 0}
+  fbxNameInputField: {fileID: 0}
 --- !u!114 &8487524476674145900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78,7 +80,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camArr: []
   currentCamera: {fileID: 0}
---- !u!114 &8487524476674145898
+--- !u!114 &905283198146212131
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -87,6 +89,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8487524476674145890}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dbeb8a1b96aefb74b9253d79896bd8a2, type: 3}
+  m_Script: {fileID: 11500000, guid: 038cf814789c9064e897f72185f1f660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

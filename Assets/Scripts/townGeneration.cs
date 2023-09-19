@@ -570,7 +570,7 @@ public class townGeneration : MonoBehaviour
         }
 
         GameObject[] allTiles = GameObject.FindGameObjectsWithTag("Floor");
-        //tilesToMesh(allTiles);
+        tilesToMesh(allTiles);
 
         foreach (GameObject tile in allTiles)
         {

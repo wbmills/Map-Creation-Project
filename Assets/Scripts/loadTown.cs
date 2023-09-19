@@ -137,7 +137,7 @@ public class loadTown : MonoBehaviour
         GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
         for(int i=0; i < parentOb.transform.childCount; i++)
         {
-            Destroy(parentOb.transform.GetChild(i));
+            Destroy(parentOb.transform.GetChild(i).gameObject);
         }
 /*        GameObject[] allBuldings = GameObject.FindGameObjectsWithTag("Building");
         GameObject[] allTrees = GameObject.FindGameObjectsWithTag("Tree");
@@ -211,5 +211,30 @@ public class loadTown : MonoBehaviour
         parent.name = "Object Parent";
         parent.tag = "Object Parent";
         parent.transform.Find("Terrain").gameObject.layer = 2;
+
+        setComponents(parent);
+    }
+
+    private void setComponents(GameObject parentOb)
+    {
+        foreach(Transform ob in parentOb.transform)
+        {
+            // add box colliders to each new object so they can be selected
+            if (!ob.gameObject.name.Contains("Terrain"))
+            {
+                addBoxCollider(ob.gameObject);
+            }
+        }
+    }
+
+    private void addBoxCollider(GameObject ob)
+    {
+        ob.AddComponent<MeshRenderer>();
+        Vector3 size = ob.GetComponent<Renderer>().bounds.size;
+        ob.AddComponent<BoxCollider>();
+        BoxCollider bc = ob.GetComponent<BoxCollider>();
+        //bc.center = ob.transform.position;
+        bc.size = size;
+
     }
 }

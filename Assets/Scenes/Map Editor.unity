@@ -609,7 +609,7 @@ PrefabInstance:
     - target: {fileID: 2967549487514643541, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
       propertyPath: terrainToSpawn
       value: 
-      objectReference: {fileID: 4289719474429641834, guid: 93ab163fffb99dd45acab0eb50636b75, type: 3}
+      objectReference: {fileID: 4289719474429641836, guid: 93ab163fffb99dd45acab0eb50636b75, type: 3}
     - target: {fileID: 2967549487514643541, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
       propertyPath: objectPrefabs.Array.data[14]
       value: 

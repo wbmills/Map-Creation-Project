@@ -25,11 +25,11 @@ public class utils : MonoBehaviour
             Destroy(t.gameObject);
         }
 
-/*        GameObject[] activeTerrains = GameObject.FindGameObjectsWithTag("Terrain");
-        foreach(GameObject terrain in activeTerrains)
+        GameObject[] activeTerrains = GameObject.FindGameObjectsWithTag("Terrain");
+        foreach (GameObject terrain in activeTerrains)
         {
             Destroy(terrain);
-        }*/
+        }
     }
 
     private void OnApplicationQuit()

@@ -28,7 +28,7 @@ public class townGeneration : MonoBehaviour
     public GameObject curObjectSpawning;
     private GameObject objectPlacer;
     private GameObject finalFloor;
-    public Terrain terrainToSpawn;
+    public GameObject terrainToSpawn;
 
     //ray for house rotation
     private Ray houseToRoadRay;
@@ -115,7 +115,9 @@ public class townGeneration : MonoBehaviour
     public void spawnEmptyMap()
     {
         utilsScript.killMap();
-        terrain = instantiateObject(terrainToSpawn.gameObject, Vector3.zero, Quaternion.identity, tag = "Terrain", false).GetComponent<Terrain>();
+        print(GameObject.Find("EditModeController").tag);
+        GameObject tempTerrain = instantiateObject(terrainToSpawn, Vector3.zero, Quaternion.identity, "Terrain", false);
+        terrain = tempTerrain.GetComponent<Terrain>();
         terrain.gameObject.layer = 2;
         boundsX = new List<float> { terrain.transform.position.x, terrain.transform.position.x + terrain.terrainData.size.x };
         boundsZ = new List<float> { terrain.transform.position.z, terrain.transform.position.z + terrain.terrainData.size.z };
@@ -261,20 +263,20 @@ public class townGeneration : MonoBehaviour
     }
     
     // spawn objects and make sure they get put in correct lists
-    public GameObject instantiateObject(GameObject obj, Vector3 pos, Quaternion rot, string tag, bool toSave)
+    public GameObject instantiateObject(GameObject obj, Vector3 pos, Quaternion rot, string tagTemp, bool toSave)
     {
         GameObject parentOb = GameObject.FindGameObjectWithTag("Object Parent");
-        if (tag == null)
+        if (tagTemp == null)
         {
-            tag = obj.tag;
+            tagTemp = obj.tag;
         }
-        else if (tag == "Floor")
+        else if (tagTemp == "Floor")
         {
             allTilePositions.Add(pos);
         }
 
         GameObject tempObj = Instantiate(obj, pos, rot);
-        tempObj.tag = tag;
+        tempObj.tag = tagTemp;
 
         // if toSave, add to parent object (empty gameObject) to be exported as FBX
         if (toSave)

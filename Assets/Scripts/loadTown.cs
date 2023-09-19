@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System;
 using System.IO;
 using TMPro;
+using UnityEditor;
 
 public class loadTown : MonoBehaviour
 {
@@ -178,17 +179,18 @@ public class loadTown : MonoBehaviour
         utilsScript.killMap();
         FBXFile = fbxNameInputField.text;
         PlayerPrefs.SetString("lastFbxFile", FBXFile);
+
+        // import map with proper Material settings to preserve Albedo colours
+        ModelImporter importer = (ModelImporter)ModelImporter.GetAtPath($"Assets/Resources/Maps/{FBXFile}.fbx");
+        importer.materialImportMode = ModelImporterMaterialImportMode.ImportStandard;
+
+        // load resource
         GameObject parent = (GameObject)Resources.Load($"Maps/{FBXFile}");
+
         parent = Instantiate(parent, Vector3.zero, Quaternion.identity);
-/*        GameObject curParentOb = GameObject.FindGameObjectWithTag("Object Parent");
-        if (curParentOb != null)
-        {
-            Destroy(curParentOb);
-        }*/
 
         parent.name = "Object Parent";
         parent.tag = "Object Parent";
-        //parent.transform.Find("Terrain").gameObject.layer = 2;
         Destroy(parent.transform.Find("Terrain").gameObject);
         tgScript.spawnEmptyMap();
 

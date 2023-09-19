@@ -118,6 +118,15 @@ public class townGeneration : MonoBehaviour
         print(GameObject.Find("EditModeController").tag);
         GameObject tempTerrain = instantiateObject(terrainToSpawn, Vector3.zero, Quaternion.identity, "Terrain", false);
         terrain = tempTerrain.GetComponent<Terrain>();
+        
+        // remove previous layer with old splatmap and create new empty one
+        Texture2D tempTexture = terrain.terrainData.terrainLayers[0].diffuseTexture;
+        //Destroy(terrain.terrainData.terrainLayers[1]);
+        TerrainLayer newLayer = new TerrainLayer();
+        newLayer.normalMapTexture = tempTexture;
+        terrain.terrainData.terrainLayers[1].diffuseTexture = tempTexture;
+
+
         terrain.gameObject.layer = 2;
         boundsX = new List<float> { terrain.transform.position.x, terrain.transform.position.x + terrain.terrainData.size.x };
         boundsZ = new List<float> { terrain.transform.position.z, terrain.transform.position.z + terrain.terrainData.size.z };

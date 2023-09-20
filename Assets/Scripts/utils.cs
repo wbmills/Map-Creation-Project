@@ -17,7 +17,6 @@ public class utils : MonoBehaviour
 
     public void killMap()
     {
-        Debug.Log("Kill Map");
         GameObject objectParent = GameObject.FindGameObjectWithTag("Object Parent");
 
         foreach(Transform t in objectParent.transform)

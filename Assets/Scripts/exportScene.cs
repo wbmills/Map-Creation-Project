@@ -14,7 +14,6 @@ public class exportScene : MonoBehaviour
     {
         // get all objects attached to parent gameobject
         GameObject allObjs = GameObject.FindGameObjectWithTag("Object Parent");
-
         // get terrain and convert to gameobject (Terrain type does not automatically convert to FBX,
         // so you have to generate a mesh based on Terrain and create new GameObject with it
         Terrain tOb = FindAnyObjectByType<Terrain>();
@@ -25,6 +24,25 @@ public class exportScene : MonoBehaviour
         string filePath = Path.Combine($"{Application.dataPath}/Resources/Maps/", $"{fileName}.fbx");
         ModelExporter.ExportObject(filePath, allObjs);
         Debug.Log($"Successful FBX Export in {filePath}");
+    }
+
+    // not in use
+    private void removeReadWriteError(GameObject parent)
+    {
+        GameObject deadParent = new GameObject();
+        string path;
+        ModelImporter importer;
+        foreach(Transform child in parent.transform)
+        {
+            path = AssetDatabase.GetAssetOrScenePath(child.gameObject);
+            print(path);
+            importer = (ModelImporter)ModelImporter.GetAtPath(path);
+            if (child.TryGetComponent<Mesh>(out Mesh m) && !m.isReadable)
+            {
+                child.SetParent(deadParent.transform);
+            }
+        }
+        Destroy(deadParent);
     }
 
     // Add extras not already in parent object to parent, add player if chosen, export as scene if chosen

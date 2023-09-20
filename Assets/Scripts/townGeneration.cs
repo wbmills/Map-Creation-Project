@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using TMPro;
-using UnityEngine.UI;
 using System;
 using Random = UnityEngine.Random;
-using System.IO;
 
 public class townGeneration : MonoBehaviour
 {
@@ -61,6 +59,7 @@ public class townGeneration : MonoBehaviour
     public GameObject[] tempObjectPrefabs;
     private Vector3 objectBounds;
     private List<GameObject> allObjectsInScene;
+    public GameObject wall;
     
 
     void Start()
@@ -90,9 +89,21 @@ public class townGeneration : MonoBehaviour
     private void updatePrefabs()
     {
         var all = Resources.LoadAll<GameObject>("Prefabs");
-        objectPrefabs = new GameObject[all.Length];
+
+        // remove prefabs that do not have sufficient mesh import settings to be exported later as FBX (read/write = true)
+        List<GameObject> allList = new List<GameObject>();
+        foreach(var p in all)
+        {
+            var potentialMesh = p.TryGetComponent<MeshFilter>(out MeshFilter m);
+            if ((potentialMesh && m.sharedMesh && m.sharedMesh.isReadable) | 
+                (p.GetComponentInChildren<MeshFilter>().sharedMesh && p.GetComponentInChildren<MeshFilter>().sharedMesh.isReadable))
+            {
+                allList.Add(p);
+            }
+        }
+        objectPrefabs = new GameObject[allList.Count];
         int i = 0;
-        foreach (var x in all)
+        foreach (var x in allList)
         {
             try
             {
@@ -166,12 +177,12 @@ public class townGeneration : MonoBehaviour
         setPlayerPrefs(houseNumString, treeNumString, extrasNumString, roadSizeString);
 
         //spawnObjects(houseNumString, houseNumString, "Building");
-        spawnWhereSpace("Building", 20);
-        //spawnWhereSpace("Tree", treeNumString);
-        //spawnWhereSpace("Details", extrasNumString);
+        spawnWhereSpace("Building", houseNumString);
+        spawnWhereSpace("Tree", treeNumString);
+        spawnWhereSpace("Details", extrasNumString);
         generateRoad(roadSizeString);
-        //rotateBuildings();
-        //spawnWalls(objectPrefabs[2], 1f);
+        rotateBuildings();
+        spawnWalls(wall);
     }
 
     public List<Vector3> getAllTilePositions()
@@ -319,29 +330,37 @@ public class townGeneration : MonoBehaviour
         }
     }
 
-    public void spawnWalls(GameObject wallObject, float freq)
+    public void spawnWalls(GameObject wallObject)
     {
         GameObject[] allBuildings = GameObject.FindGameObjectsWithTag("Building");
         foreach(GameObject building in allBuildings)
         {
-            GameObject conLeft = building.transform.Find("conLeft").gameObject;
-            GameObject conRight = building.transform.Find("conRight").gameObject;
-            Vector3 objSize = wallObject.GetComponent<Renderer>().bounds.size;
-            Vector3 rayPos = conRight.transform.position;
-            Vector3 endPos = conRight.transform.right * 5;
-
-            Ray tempRay = new Ray(rayPos, endPos);
-            RaycastHit tempRayInfo = new RaycastHit();
-            Physics.Raycast(tempRay, out tempRayInfo);
-
-            float chance = Random.Range(0, 100) / 100;
-            
-            if (tempRayInfo.collider && tempRayInfo.collider.tag == "Building" && tempRayInfo.distance >= objSize.x && tempRayInfo.distance < 15)
+            foreach (Transform child in building.transform)
             {
-                GameObject conLeft2 = tempRayInfo.collider.transform.Find("conLeft").gameObject;
-                allRays.Add(new List<Vector3>() { conRight.transform.position, conLeft2.transform.position });
+                if (child.name.Contains("conLeft"))
+                {
+                    GameObject conLeft = building.transform.Find("conLeft").gameObject;
+                    GameObject conRight = building.transform.Find("conRight").gameObject;
+                    Vector3 objSize = wallObject.GetComponent<Renderer>().bounds.size;
+                    Vector3 rayPos = conRight.transform.position;
+                    Vector3 endPos = conRight.transform.right * 5;
 
-                drawWall(wallObject, conLeft2, conRight);
+                    Ray tempRay = new Ray(rayPos, endPos);
+                    RaycastHit tempRayInfo = new RaycastHit();
+                    Physics.Raycast(tempRay, out tempRayInfo);
+
+                    float chance = Random.Range(0, 100) / 100;
+
+                    if (tempRayInfo.collider && tempRayInfo.collider.tag == "Building" && tempRayInfo.distance >= objSize.x && tempRayInfo.distance < 15)
+                    {
+                        GameObject conLeft2 = tempRayInfo.collider.transform.Find("conLeft").gameObject;
+                        allRays.Add(new List<Vector3>() { conRight.transform.position, conLeft2.transform.position });
+
+                        drawWall(wallObject, conLeft2, conRight);
+                    }
+                    break;
+                }
+            
 
 /*                GameObject tempObj = instantiateObject(wallObject, Vector3.zero, Quaternion.Euler(0, 0, 0), null, true);
                 tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));

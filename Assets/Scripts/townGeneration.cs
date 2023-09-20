@@ -165,12 +165,13 @@ public class townGeneration : MonoBehaviour
         int roadSizeString = Int32.Parse(roadSize.text);
         setPlayerPrefs(houseNumString, treeNumString, extrasNumString, roadSizeString);
 
-        spawnObjects(houseNumString, houseNumString, "Building");
-        spawnWhereSpace("Tree", treeNumString);
-        spawnWhereSpace("Details", extrasNumString);
+        //spawnObjects(houseNumString, houseNumString, "Building");
+        spawnWhereSpace("Building", 20);
+        //spawnWhereSpace("Tree", treeNumString);
+        //spawnWhereSpace("Details", extrasNumString);
         generateRoad(roadSizeString);
-        rotateBuildings();
-        spawnWalls(objectPrefabs[2], 1f);
+        //rotateBuildings();
+        //spawnWalls(objectPrefabs[2], 1f);
     }
 
     public List<Vector3> getAllTilePositions()
@@ -381,7 +382,6 @@ public class townGeneration : MonoBehaviour
 
     private void spawnWhereSpace(string filterTag, int maxNum)
     {
-        int chance = 50;
         GameObject obj;
         List<GameObject> obList = new List<GameObject>();
         foreach(GameObject ob in objectPrefabs)
@@ -391,30 +391,28 @@ public class townGeneration : MonoBehaviour
                 obList.Add(ob);
             }
         }
-        Vector3 objBounds;
         Vector3 curPos = new Vector3(0, 0, 0);
         int layerMask = ~(1 << 2);
 
-        int step = (int)((boundsX[1] - boundsX[0]) / maxNum) * 5;
+        //int step = (int)((boundsX[1] - boundsX[0]) / maxNum);
+        float step = MathF.Sqrt(boundsX[1] * boundsX[1] / maxNum);
         int curNum = 0;
-        for (int y=0; y < terrain.terrainData.bounds.size.z; y+= step)
+        float initOffset = 20;
+        for (float y=initOffset; y <= terrain.terrainData.bounds.size.z + step; y += step)
         {
-            for (int x = 0; x < terrain.terrainData.bounds.size.x; x+= step)
+            for (float x = initOffset; x <= terrain.terrainData.bounds.size.x + step; x += step)
             {
-                Collider[] all = Physics.OverlapSphere(curPos, 1, layerMask);
-                if (all.Length == 0 && curNum < maxNum && !isOutofBounds(curPos) && Random.Range(0, 100) > chance)
+                float offPoint = Random.Range(0, step / 2);
+                Vector3 newPos = new Vector3(curPos.x + offPoint, curPos.y, curPos.z + offPoint);
+                Collider[] all = Physics.OverlapSphere(newPos, 1, layerMask);
+                obj = obList[Random.Range(0, obList.Count)];
+                if (all.Length == 0 && curNum < maxNum && !isOutOfBoundsObject(obj, newPos))
                 {
-                    obj = obList[Random.Range(0, obList.Count)];
-                    objBounds = obj.GetComponent<Renderer>().bounds.size;
-                    //GameObject tempObj = Instantiate(obj, curPos, Quaternion.identity);
-                    GameObject tempObj = instantiateObject(obj, curPos, Quaternion.identity, obj.tag, true);
+                    Quaternion tempRot = Quaternion.Euler(0, Random.Range(-1, 3) * 90, 0);
+                    GameObject tempObj = instantiateObject(obj, newPos, tempRot, obj.tag, true);
                     tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));
                     allObjectsInScene.Add(tempObj);
                     curNum++;
-                }
-                else
-                {
-                    //print(all.Length);
                 }
                 curPos = new Vector3(x, 0, y);
             }
@@ -473,7 +471,6 @@ public class townGeneration : MonoBehaviour
                     
                     if (ob.Value >= chance && !isRaycastColliding())
                     {
-                        //GameObject tempObj = Instantiate(ob.Key, objectPlacer.transform.position, newObjectRotation);
                         GameObject tempObj = instantiateObject(ob.Key, objectPlacer.transform.position, newObjectRotation, ob.Key.tag, true);
                         tempObj.transform.Translate(Vector3.up * terrain.SampleHeight(tempObj.transform.position));  
                     }
@@ -577,7 +574,6 @@ public class townGeneration : MonoBehaviour
         CombineInstance[] tileMeshInstances = new CombineInstance[allTiles.Length];
 
         Mesh tileMesh = new Mesh();
-        tileMesh.CombineMeshes(tileMeshInstances);
 
         int i = 0;
         foreach (GameObject tile in allTiles)
@@ -587,10 +583,11 @@ public class townGeneration : MonoBehaviour
             i++;
         }
 
+        tileMesh.CombineMeshes(tileMeshInstances);
         //finalFloor = Instantiate(emptyPrefab, Vector3.zero, Quaternion.identity);
-        finalFloor = instantiateObject(emptyPrefab, Vector3.zero, Quaternion.identity, "Floor", false);
+        finalFloor = instantiateObject(emptyPrefab, Vector3.zero, Quaternion.identity, "Floor", true);
         finalFloor.transform.GetComponent<MeshFilter>().sharedMesh = tileMesh;
-        finalFloor.transform.gameObject.SetActive(false);
+        finalFloor.transform.gameObject.SetActive(true);
     }
 
     public void terrainPainter(List<Vector3> tilePositions)
@@ -624,6 +621,29 @@ public class townGeneration : MonoBehaviour
     private bool isOutofBounds(Vector3 position)
     {
         if (position.x > boundsX[0] && position.x < boundsX[1] && position.z > boundsZ[0] && position.z < boundsZ[1])
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    private bool isOutOfBoundsObject(GameObject ob, Vector3 curPos)
+    {
+        Vector3 position = curPos;
+        Vector3 size;
+        if (ob.TryGetComponent<Renderer>(out Renderer r))
+        {
+            size = r.bounds.size;
+        }
+        else
+        {
+            size = Vector3.zero;
+        }
+
+        if (position.x > boundsX[0] && position.x + size.x < boundsX[1] && position.z > boundsZ[0] && position.z  + size.z < boundsZ[1])
         {
             return false;
         }

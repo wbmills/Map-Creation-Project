@@ -21,7 +21,13 @@ public class playerController : MonoBehaviour
         baseSpeed = 10f;
         sprintSpeed = baseSpeed * 2f;
         speed = baseSpeed;
-        player = GameObject.Find("Player");   
+        player = GameObject.Find("Player");
+        if (GameObject.FindGameObjectsWithTag("MainCamera").Length == 1)
+        {
+            canMove = true;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     // Update is called once per frame

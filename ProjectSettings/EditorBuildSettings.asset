@@ -4,5 +4,20 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Map Editor.unity
+    guid: 5697bcbb9b510c945a85b7abcb77c62e
+  - enabled: 1
+    path: Assets/Scenes/Export Map.unity
+    guid: b1ef61f42a55e714d8af493234c16401
+  - enabled: 0
+    path: Assets/Scenes/Export Map 1 Scene.unity
+    guid: 8748aa4daf6a2e646a558a1a1c382012
+  - enabled: 0
+    path: Assets/Scenes/Export Map 2.unity
+    guid: 275206753737d7f489b9956834a69e08
+  - enabled: 0
+    path: Assets/Scenes/WaveCollapseTestScene.unity
+    guid: 8bb783296b3b4ce4d93f2c6f747769f4
   m_configObjects: {}

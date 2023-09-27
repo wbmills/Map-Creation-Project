@@ -168,10 +168,20 @@ public class editModeController : MonoBehaviour
         }
     }
 
-    private bool checkInTerrain(GameObject ob)
+    private bool checkInTerrain(GameObject ob=null)
     {
         bool check;
-        Vector3 obPos = ob.transform.position;
+        Vector3 obPos;
+        if (ob == null)
+        {
+            obPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.y));
+        }
+        else
+        {
+            obPos = ob.transform.position;
+        }
+
+        
         if (obPos.x < terrainBounds.x && obPos.x > 0 && obPos.z < terrainBounds.z && obPos.z > 0)
         {
             check = true;
@@ -246,7 +256,7 @@ public class editModeController : MonoBehaviour
             updateTerrainObject();
         }
         
-        if (terrain)
+        if (terrain && checkInTerrain())
         {
             runEditMode();
         }

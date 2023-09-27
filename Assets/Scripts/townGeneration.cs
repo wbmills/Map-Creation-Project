@@ -8,15 +8,9 @@ using Random = UnityEngine.Random;
 
 public class townGeneration : MonoBehaviour
 {
-    // input fields for menu
-    public TMP_InputField houseNum;
-    public TMP_InputField treeNum;
-    public TMP_InputField extrasNum;
-    public TMP_InputField roadSize;
     private utils utilsScript;
 
     // for the road tiles
-    public GameObject emptyPrefab;
     public List<Vector3> allTilePositions;
     private List<List<Vector3>> allRays;
 
@@ -25,7 +19,6 @@ public class townGeneration : MonoBehaviour
     private GameObject currentTile;
     public GameObject curObjectSpawning;
     private GameObject objectPlacer;
-    private GameObject finalFloor;
     public GameObject terrainToSpawn;
 
     //ray for house rotation
@@ -57,7 +50,6 @@ public class townGeneration : MonoBehaviour
     // the size of the object to be spawned and the list of objects that can be spawned
     public GameObject[] objectPrefabs;
     public GameObject[] tempObjectPrefabs;
-    private Vector3 objectBounds;
     private List<GameObject> allObjectsInScene;
     public GameObject wall;
     
@@ -70,20 +62,6 @@ public class townGeneration : MonoBehaviour
         allObjectsInScene = new List<GameObject>();
         allRays = new List<List<Vector3>>();
         objectPlacer = GameObject.FindGameObjectWithTag("Object Placer");
-        //spawnEmptyMap();
-
-        if (PlayerPrefs.HasKey("houseNum"))
-        {
-            int[] prefs = getPlayerPrefs();
-            houseNum.text = prefs[0].ToString();
-            treeNum.text = prefs[1].ToString();
-            extrasNum.text = prefs[2].ToString();
-            roadSize.text = prefs[3].ToString();
-        }
-        else
-        {
-            setPlayerPrefs(0, 0, 0, 0);
-        }
     }
 
     private void updatePrefabs()
@@ -148,39 +126,17 @@ public class townGeneration : MonoBehaviour
         allObjectsInScene.Add(obj);
     }
 
-    private int[] getPlayerPrefs()
-    {
-        int[] all = new int[] { PlayerPrefs.GetInt("houseNum"), PlayerPrefs.GetInt("treeNum"),
-        PlayerPrefs.GetInt("extrasNum"), PlayerPrefs.GetInt("roadSize")};
-
-        return all;
-    }
-
-    private void setPlayerPrefs(int houseNum, int treeNum, int extrasNum, int roadSize)
-    {
-        PlayerPrefs.SetInt("houseNum", houseNum);
-        PlayerPrefs.SetInt("treeNum", treeNum);
-        PlayerPrefs.SetInt("extrasNum", extrasNum);
-        PlayerPrefs.SetInt("roadSize", roadSize);
-        PlayerPrefs.Save();
-    }
-
     public void generate()
     {
         utilsScript.killMap();
         spawnEmptyMap();
         allTilePositions = new List<Vector3>();
-        int houseNumString = Int32.Parse(houseNum.text);
-        int treeNumString = Int32.Parse(treeNum.text);
-        int extrasNumString = Int32.Parse(extrasNum.text);
-        int roadSizeString = Int32.Parse(roadSize.text);
-        setPlayerPrefs(houseNumString, treeNumString, extrasNumString, roadSizeString);
-
+        
         //spawnObjects(houseNumString, houseNumString, "Building");
-        spawnWhereSpace("Building", houseNumString);
-        spawnWhereSpace("Tree", treeNumString);
-        spawnWhereSpace("Details", extrasNumString);
-        generateRoad(roadSizeString);
+        spawnWhereSpace("Building", PlayerPrefs.GetInt("houseNum"));
+        spawnWhereSpace("Tree", PlayerPrefs.GetInt("treeNum"));
+        spawnWhereSpace("Details", PlayerPrefs.GetInt("extrasNum"));
+        generateRoad(PlayerPrefs.GetInt("roadSize"));
         rotateBuildings();
         spawnWalls(wall);
     }
@@ -603,10 +559,11 @@ public class townGeneration : MonoBehaviour
         }
 
         tileMesh.CombineMeshes(tileMeshInstances);
-        //finalFloor = Instantiate(emptyPrefab, Vector3.zero, Quaternion.identity);
-        finalFloor = instantiateObject(emptyPrefab, Vector3.zero, Quaternion.identity, "Floor", true);
-        finalFloor.transform.GetComponent<MeshFilter>().sharedMesh = tileMesh;
-        finalFloor.transform.gameObject.SetActive(true);
+        GameObject emptyFloor = new GameObject("Floor");
+        emptyFloor.AddComponent<MeshFilter>().sharedMesh = tileMesh;
+        emptyFloor.AddComponent<MeshRenderer>();
+        Vector3 pos = GameObject.FindGameObjectWithTag("Terrain").transform.position;
+        instantiateObject(emptyFloor, pos, Quaternion.identity, "Floor", true);
     }
 
     public void terrainPainter(List<Vector3> tilePositions)

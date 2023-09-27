@@ -5,18 +5,29 @@ using UnityEngine;
 public class waveFunctionCollapseTesting : MonoBehaviour
 {
     public List<MapSegment> segments;
+    public List<GameObject> segmentGameObjects;
+    public GameObject emptySegment;
 
     // Start is called before the first frame update
     void Start()
     {
         segments = new List<MapSegment>();
         loadSegments();
+        GenerateMap(5, 5);
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+    private void setGameObjectMapSegments(GameObject[,] arr)
+    {
+        foreach(GameObject x in arr)
+        {
+
+        }
     }
 
     // so far, this generates a representation of the map, but does not implement it. 
@@ -33,6 +44,16 @@ public class waveFunctionCollapseTesting : MonoBehaviour
         };
         // a 2D map of empty segments
         MapSegment[,] mapSegments = new MapSegment[width, height];
+        GameObject[,] objectSegments = new GameObject[width, height];
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                objectSegments[x, y] = Instantiate(emptySegment, new Vector3(x * 10, 0, y * 10), Quaternion.identity);
+                objectSegments[x, y].AddComponent<SegmentController>();
+            }
+        }
+
         int loopCap = 1000;
         int iterations = 0;
         int tileNum = 0;
@@ -66,6 +87,7 @@ public class waveFunctionCollapseTesting : MonoBehaviour
                     if (possibleSegment.connectionValues(closestWall) == curSegment.connectionValues(-closestWall))
                     {
                         mapSegments[tempRow, tempCol] = possibleSegment;
+                        objectSegments[tempRow, tempCol].GetComponent<SegmentController>().setSegmentData(possibleSegment);
                         foundTile = true;
                     }
                 }
@@ -74,6 +96,7 @@ public class waveFunctionCollapseTesting : MonoBehaviour
                 if (!foundTile)
                 {
                     mapSegments[tempRow, tempCol] = segments[0];
+                    objectSegments[tempRow, tempCol].GetComponent<SegmentController>().setSegmentData(segments[0]);
                 }
             }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Formats.Fbx.Exporter;
 using System.IO;
-
+//using UnityEditor.Formats.Fbx.Exporter;
 public class exportScene : MonoBehaviour
 {
     public GameObject playerPrefab;

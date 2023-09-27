@@ -215,7 +215,6 @@ public class loadTown : MonoBehaviour
         Vector3 size = ob.GetComponent<Renderer>().bounds.size;
         ob.AddComponent<BoxCollider>();
         BoxCollider bc = ob.GetComponent<BoxCollider>();
-        //bc.center = ob.transform.position;
         bc.size = size;
     }
 }

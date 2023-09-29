@@ -138,7 +138,7 @@ public class townGeneration : MonoBehaviour
         spawnWhereSpace("Details", PlayerPrefs.GetInt("extrasNum"));
         generateRoad(PlayerPrefs.GetInt("roadSize"));
         rotateBuildings();
-        spawnWalls(wall);
+        autoSpawnWall(wall);
     }
 
     public List<Vector3> getAllTilePositions()
@@ -286,7 +286,7 @@ public class townGeneration : MonoBehaviour
         }
     }
 
-    public void spawnWalls(GameObject wallObject)
+    public void autoSpawnWall(GameObject wallObject)
     {
         GameObject[] allBuildings = GameObject.FindGameObjectsWithTag("Building");
         foreach(GameObject building in allBuildings)

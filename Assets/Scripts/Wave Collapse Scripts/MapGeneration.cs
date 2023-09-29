@@ -2,22 +2,41 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 
 // Map Gen 2.0 
+public class Road
+{
+    public int id;
+    public Vector3 centre;
+    public GameObject[] buildings;
+    public GameObject[] walls;
+    public GameObject[] details;
+    public bool hasGround;
+
+    public Vector3 pointA;
+    public Vector3 pointB;
+
+    // width and length of road, where 
+    public float width;
+    public float length;
+}
 public class MapGeneration : MonoBehaviour
 {
     private Terrain mapTerrain;
+    private Vector3 terrainCentre;
     private List<GameObject> allObjectsInMap;
+    private List<Road> allRoads;
 
     void Start()
     {
-        allObjectsInMap = new List<GameObject>();
-    }
-
-    private void Awake()
-    {
         SetMapTerrain();
+        allRoads = new List<Road>();
+        allObjectsInMap = new List<GameObject>();
+        //GenerateMap(1f, 1f, 1f, 10f, 5f, 10f, 5f);
+        
+        GenerateMap();
     }
 
     void Update()
@@ -26,21 +45,73 @@ public class MapGeneration : MonoBehaviour
     }
 
     // Generate map (in progress)
-    private void GenerateMap(float mapDensity, float uniformity, float roadAngularity, float maxRoadWidth,
-        float minRoadWidth, float maxRoadLength, float minRoadLength, float randomness = 0, float angleResolution = 1, Vector3 centre = default,
-        string theme = "Default")
+    /*private void GenerateMap(float mapDensity, float uniformity, float roadAngularity, float maxRoadWidth,
+        float minRoadWidth, float maxRoadLength, float minRoadLength, Vector3 centre = default, float randomness = 0f, float angleResolution = 1f, string theme = "Default")*/
+    private void GenerateMap()
     {
-        GameObject[] obsOfTheme = (GameObject[])Resources.LoadAll($"Map Generation/{theme}");
+        string theme = "default";
+        Vector3 centre = terrainCentre;
+        float maxRoadLength = 10f;
+        float maxRoadWidth = 5f;
+        GameObject[] obsOfTheme = Resources.LoadAll<GameObject>($"Map Generation/{theme}");
         if (!CheckCompletePrefabSet(theme, obsOfTheme))
         {
             throw new Exception("Not all the required prefabs are present");
+        }
+
+        int i = 0;
+        bool end = false;
+        float curPos = centre.z;
+
+        while (!end && i < 100)
+        {
+            if (allRoads.Count == 0)
+            {
+                Road initRoad = new Road();
+                initRoad.centre = terrainCentre;
+                initRoad.pointB = new Vector3(terrainCentre.x, terrainCentre.y, terrainCentre.z + (maxRoadLength / 2));
+                initRoad.pointA = new Vector3(terrainCentre.x, terrainCentre.y, terrainCentre.z - (maxRoadLength / 2));
+                allRoads.Add(initRoad);
+            }
+
+            Road tempRoad = new Road();
+            tempRoad.pointA = allRoads[allRoads.Count-1].pointB;
+            tempRoad.centre = new Vector3(tempRoad.pointA.x, tempRoad.pointA.y, tempRoad.pointA.z + (maxRoadLength / 2));
+            tempRoad.pointB = new Vector3(tempRoad.centre.x, tempRoad.centre.y, tempRoad.centre.z + (maxRoadLength / 2));
+            tempRoad.length = maxRoadLength;
+            tempRoad.width = maxRoadWidth;
+            if (tempRoad.pointB.z + maxRoadLength >= mapTerrain.terrainData.size.z)
+            {
+                end = true;
+            }
+            allRoads.Add(tempRoad);
+            curPos += maxRoadLength * Random.Range(10, 100) * 0.01f;
+            i++;
+        }
+        print(allRoads.Count);
+    }
+
+    private void DebugShowRoads()
+    {
+
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (allRoads != null)
+        {
+            foreach (Road r in allRoads)
+            {
+                Gizmos.DrawCube(r.pointA, Vector3.one);
+                Gizmos.DrawCube(r.pointB, Vector3.one);
+            }
         }
     }
 
     private bool CheckCompletePrefabSet(string theme, GameObject[] prefabsOfTheme)
     {
         Dictionary<string, int> requiredPrefabs = new Dictionary<string, int>() {
-            {"building", 0 },
+            {"Building", 0 },
             {"Walls", 0 } 
         };
 
@@ -86,10 +157,14 @@ public class MapGeneration : MonoBehaviour
         if (newTerrain == null && allTerrains.Length > 0)
         {
             mapTerrain = allTerrains[0].GetComponent<Terrain>();
+            terrainCentre = new Vector3(mapTerrain.transform.position.x + (mapTerrain.terrainData.size.x / 2),
+                mapTerrain.transform.position.y, mapTerrain.transform.position.z + (mapTerrain.terrainData.size.z / 2));
         }
         else if (newTerrain != null)
         {
             mapTerrain = newTerrain.GetComponent<Terrain>();
+            terrainCentre = new Vector3(mapTerrain.transform.position.x + (mapTerrain.terrainData.size.x / 2),
+                mapTerrain.transform.position.y, mapTerrain.transform.position.z + (mapTerrain.terrainData.size.z / 2));
         }
         else
         {

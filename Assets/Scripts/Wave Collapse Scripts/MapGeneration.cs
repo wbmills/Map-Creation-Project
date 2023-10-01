@@ -53,6 +53,7 @@ public class MapGeneration : MonoBehaviour
         float maxRoadLength = 60f;
         float maxRoadWidth = 5f;
         GameObject[] obsOfTheme = Resources.LoadAll<GameObject>($"Map Generation/{theme}");
+        List<Vector3> allDirs = new List<Vector3>() { Vector3.zero, Vector3.forward, Vector3.right, Vector3.left };
         if (!CheckCompletePrefabSet(theme, obsOfTheme))
         {
             throw new Exception("Not all the required prefabs are present");
@@ -61,8 +62,8 @@ public class MapGeneration : MonoBehaviour
         int i = 0;
         bool end = false;
         float curPos = init_point.z;
-
-        while (!end && i < 100)
+        float maxRoads = 20;
+        while (!end && i < maxRoads)
         {
 
             Road tempRoad = new Road();
@@ -74,22 +75,23 @@ public class MapGeneration : MonoBehaviour
             {
                 tempRoad.pointA = allRoads[allRoads.Count - 1].pointB;
             }
-            
-            tempRoad.centre = new Vector3(tempRoad.pointA.x, tempRoad.pointA.y, tempRoad.pointA.z + (maxRoadLength / 2));
-            tempRoad.pointB = new Vector3(tempRoad.centre.x, tempRoad.centre.y, tempRoad.centre.z + (maxRoadLength / 2));
+            Vector3 newDir = allDirs[Random.Range(0, allDirs.Count)] * (maxRoadLength / 2);
+            tempRoad.centre = tempRoad.pointA + newDir;
+            tempRoad.pointB = tempRoad.centre + newDir;
+            //tempRoad.centre = new Vector3(tempRoad.pointA.x, tempRoad.pointA.y, tempRoad.pointA.z + (maxRoadLength / 2));
+            //tempRoad.pointB = new Vector3(tempRoad.centre.x, tempRoad.centre.y, tempRoad.centre.z + (maxRoadLength / 2));
             tempRoad.length = maxRoadLength;
             tempRoad.width = maxRoadWidth;
 
-            if (tempRoad.pointB.z + maxRoadLength >= mapTerrain.terrainData.size.z)
+/*            if (tempRoad.pointB.z + maxRoadLength >= mapTerrain.terrainData.size.z)
             {
                 end = true;
-            }
+            }*/
             SetRoadObjects(tempRoad, .7f, .9f, "Building", obsOfTheme);
             allRoads.Add(tempRoad);
-            curPos += maxRoadLength * Random.Range(10, 100) * 0.01f;
             i++;
-            //end = true;
         }
+        print(allRoads.Count);
     }
 
 
@@ -112,25 +114,27 @@ public class MapGeneration : MonoBehaviour
                 wall = ob;
             }
         }
-
+        Vector3 direction = (road.pointB - road.pointA).normalized;
         Vector3 initPoint = road.pointA; // set initial position to the beginning of the first road in the array
         float distanceBetweenObjects = (road.length * density);
-        Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
+        //Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
+        Vector3 furthestBoundLeft = road.pointA + (distanceBetweenObjects * direction);
         int i = 0; // iterate to prevent accidental 'forever loop'
-        while (i < 100 && furthestBoundLeft.z < road.pointB.z)
+        
+        while (i < 100 && (road.pointB - furthestBoundLeft).normalized == direction )
         {
             RaycastHit furthestPointInfo;
-            Physics.Raycast(road.pointB, Vector3.back, out furthestPointInfo, maxDistance: road.length);
+            Physics.Raycast(road.pointB, -direction, out furthestPointInfo, maxDistance: road.length);
             if (furthestPointInfo.point == Vector3.zero)
             {
                 Vector3 point = road.pointA;
-                furthestBoundLeft = new Vector3(point.x, point.y, point.z + distanceBetweenObjects);
+                furthestBoundLeft = point + (distanceBetweenObjects * direction);
             }
             else
             {
                 Vector3 point = furthestPointInfo.point;
-                furthestBoundLeft = new Vector3(point.x, point.y, point.z + distanceBetweenObjects);
-                if (furthestBoundLeft.z > road.pointB.z)
+                furthestBoundLeft = point + (distanceBetweenObjects * direction); ;
+                if ((road.pointB - furthestBoundLeft).normalized != direction)
                 {
                     break;
                 }
@@ -140,17 +144,14 @@ public class MapGeneration : MonoBehaviour
             GameObject newOb = prefabsOfTag[Random.Range(0, prefabsOfTag.Count)];
             float newYPos = mapTerrain.SampleHeight(furthestBoundLeft);
             newOb.transform.position = furthestBoundLeft;
-            //newOb.transform.rotation = Quaternion.AngleAxis(90, Vector3.up);
+            newOb.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            newOb.transform.Rotate(new Vector3(0, 90, 0));
             road.buildings.Add(newOb);
             Instantiate(newOb);
             BuildWall(wall, newOb, road);
             i++;
         }
-    }
-
-    private void DebugShowRoads()
-    {
-
+        print(i);
     }
 
     private void OnDrawGizmos()
@@ -250,8 +251,9 @@ public class MapGeneration : MonoBehaviour
         Vector3 leftBounds;
         Vector3 rightBounds;
         RaycastHit check = new RaycastHit();
-        Physics.Raycast(ob.transform.position, Vector3.back, out check);
-        if (isCollisionAChild(check.collider, ob))
+        Vector3 direction = (road.pointB - road.pointA).normalized;
+        Physics.Raycast(ob.transform.position, -direction, out check);
+        if (isCollisionAChild(check.collider, ob) | (road.pointA - check.point).normalized == direction)
         {
             return;
         }
@@ -264,7 +266,7 @@ public class MapGeneration : MonoBehaviour
             leftBounds = road.pointA;
         }
 
-        Physics.Raycast(leftBounds, Vector3.forward, out check);
+        Physics.Raycast(leftBounds, direction, out check);
         if (check.collider)
         {
             rightBounds = check.point;

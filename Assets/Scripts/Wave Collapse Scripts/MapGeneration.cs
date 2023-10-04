@@ -17,6 +17,7 @@ public class Road
 
     public Vector3 pointA;
     public Vector3 pointB;
+    public Road pointer;
 
     // width and length of road, where 
     public float width;
@@ -74,6 +75,7 @@ public class MapGeneration : MonoBehaviour
             else
             {
                 tempRoad.pointA = allRoads[allRoads.Count - 1].pointB;
+                allRoads[allRoads.Count - 1].pointer = tempRoad;
             }
             Vector3 newDir = allDirs[Random.Range(0, allDirs.Count)] * (maxRoadLength / 2);
             tempRoad.centre = tempRoad.pointA + newDir;
@@ -82,6 +84,7 @@ public class MapGeneration : MonoBehaviour
             //tempRoad.pointB = new Vector3(tempRoad.centre.x, tempRoad.centre.y, tempRoad.centre.z + (maxRoadLength / 2));
             tempRoad.length = maxRoadLength;
             tempRoad.width = maxRoadWidth;
+            tempRoad.pointer = null;
 
 /*            if (tempRoad.pointB.z + maxRoadLength >= mapTerrain.terrainData.size.z)
             {
@@ -115,43 +118,52 @@ public class MapGeneration : MonoBehaviour
             }
         }
         Vector3 direction = (road.pointB - road.pointA).normalized;
-        Vector3 initPoint = road.pointA; // set initial position to the beginning of the first road in the array
-        float distanceBetweenObjects = (road.length * density);
-        //Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
-        Vector3 furthestBoundLeft = road.pointA + (distanceBetweenObjects * direction);
-        int i = 0; // iterate to prevent accidental 'forever loop'
-        
-        while (i < 100 && (road.pointB - furthestBoundLeft).normalized == direction )
-        {
-            RaycastHit furthestPointInfo;
-            Physics.Raycast(road.pointB, -direction, out furthestPointInfo, maxDistance: road.length);
-            if (furthestPointInfo.point == Vector3.zero)
-            {
-                Vector3 point = road.pointA;
-                furthestBoundLeft = point + (distanceBetweenObjects * direction);
-            }
-            else
-            {
-                Vector3 point = furthestPointInfo.point;
-                furthestBoundLeft = point + (distanceBetweenObjects * direction); ;
-                if ((road.pointB - furthestBoundLeft).normalized != direction)
-                {
-                    break;
-                }
-            }
+        float angleFromCentre = Vector3.Angle(Vector3.forward, road.pointA);
 
-            // set new object and its position
-            GameObject newOb = prefabsOfTag[Random.Range(0, prefabsOfTag.Count)];
-            float newYPos = mapTerrain.SampleHeight(furthestBoundLeft);
-            newOb.transform.position = furthestBoundLeft;
-            newOb.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
-            newOb.transform.Rotate(new Vector3(0, 90, 0));
-            road.buildings.Add(newOb);
-            Instantiate(newOb);
-            BuildWall(wall, newOb, road);
-            i++;
+        // x = r(cos(degrees°)), y = r(sin(degrees°)).
+        Vector3 pointALeft = new Vector3(road.width * Mathf.Cos(angleFromCentre - 90), road.pointA.y, road.width * Mathf.Cos(angleFromCentre - 90));
+        Vector3 pointARight = new Vector3(road.width * Mathf.Cos(angleFromCentre + 90), road.pointA.y, road.width * Mathf.Cos(angleFromCentre + 90));
+        
+        Vector3[] sides = new Vector3[2] {pointALeft, pointARight };
+        foreach(Vector3 side in sides)
+        {
+            Vector3 initPoint = road.pointA; // set initial position to the beginning of the first road in the array
+            float distanceBetweenObjects = (road.length * density);
+            //Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
+            Vector3 furthestBoundLeft = road.pointA + (distanceBetweenObjects * direction);
+            int i = 0; // iterate to prevent accidental 'forever loop'
+
+            while (i < 100 && (road.pointB - furthestBoundLeft).normalized == direction)
+            {
+                RaycastHit furthestPointInfo;
+                Physics.Raycast(road.pointB, -direction, out furthestPointInfo, maxDistance: road.length);
+                if (furthestPointInfo.point == Vector3.zero)
+                {
+                    Vector3 point = road.pointA;
+                    furthestBoundLeft = point + (distanceBetweenObjects * direction);
+                }
+                else
+                {
+                    Vector3 point = furthestPointInfo.point;
+                    furthestBoundLeft = point + (distanceBetweenObjects * direction); ;
+                    if ((road.pointB - furthestBoundLeft).normalized != direction)
+                    {
+                        break;
+                    }
+                }
+
+                // set new object and its position
+                GameObject newOb = prefabsOfTag[Random.Range(0, prefabsOfTag.Count)];
+                float newYPos = mapTerrain.SampleHeight(furthestBoundLeft);
+                newOb.transform.position = furthestBoundLeft;
+                newOb.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+                newOb.transform.Rotate(new Vector3(0, 90, 0));
+                road.buildings.Add(newOb);
+                Instantiate(newOb);
+                BuildWall(wall, newOb, road);
+                i++;
+            }
         }
-        print(i);
     }
 
     private void OnDrawGizmos()

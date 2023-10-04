@@ -52,7 +52,7 @@ public class MapGeneration : MonoBehaviour
         string theme = "default";
         Vector3 init_point = new Vector3(50f, 2.5f, 20);
         float maxRoadLength = 60f;
-        float maxRoadWidth = 5f;
+        float maxRoadWidth = 20f;
         GameObject[] obsOfTheme = Resources.LoadAll<GameObject>($"Map Generation/{theme}");
         List<Vector3> allDirs = new List<Vector3>() { Vector3.zero, Vector3.forward, Vector3.right, Vector3.left };
         if (!CheckCompletePrefabSet(theme, obsOfTheme))
@@ -86,15 +86,12 @@ public class MapGeneration : MonoBehaviour
             tempRoad.width = maxRoadWidth;
             tempRoad.pointer = null;
 
-/*            if (tempRoad.pointB.z + maxRoadLength >= mapTerrain.terrainData.size.z)
-            {
-                end = true;
-            }*/
             SetRoadObjects(tempRoad, .7f, .9f, "Building", obsOfTheme);
             allRoads.Add(tempRoad);
             i++;
+            end = true;
         }
-        print(allRoads.Count);
+        print($"Road Count: {allRoads.Count}");
     }
 
 
@@ -118,35 +115,37 @@ public class MapGeneration : MonoBehaviour
             }
         }
         Vector3 direction = (road.pointB - road.pointA).normalized;
-        float angleFromCentre = Vector3.Angle(Vector3.forward, road.pointA);
+        float angleFromCentre = Vector3.Angle(Vector3.forward, direction) * (Mathf.PI / 180);
+        float addX = road.width * Mathf.Sin(angleFromCentre + (90 * (Mathf.PI / 180)));
+        float addY = road.width * Mathf.Cos(angleFromCentre + (90 * (Mathf.PI / 180)));
+        Vector3 pointALeft = new Vector3(road.pointA.x + addX, road.pointA.y, road.pointA.z + addY);
+        Vector3 pointARight = new Vector3(road.pointA.x - addX, road.pointA.y, road.pointA.z - addY);
 
-        // x = r(cos(degrees°)), y = r(sin(degrees°)).
-        Vector3 pointALeft = new Vector3(road.width * Mathf.Cos(angleFromCentre - 90), road.pointA.y, road.width * Mathf.Cos(angleFromCentre - 90));
-        Vector3 pointARight = new Vector3(road.width * Mathf.Cos(angleFromCentre + 90), road.pointA.y, road.width * Mathf.Cos(angleFromCentre + 90));
-        
         Vector3[] sides = new Vector3[2] {pointALeft, pointARight };
         foreach(Vector3 side in sides)
         {
-            Vector3 initPoint = road.pointA; // set initial position to the beginning of the first road in the array
+            Vector3 relativeSideA = side;
+            Vector3 relativeSideB = relativeSideA + (direction * road.length);
+            Vector3 initPoint = relativeSideA; // set initial position to the beginning of the first road in the array
             float distanceBetweenObjects = (road.length * density);
             //Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
-            Vector3 furthestBoundLeft = road.pointA + (distanceBetweenObjects * direction);
+            Vector3 furthestBoundLeft = relativeSideA + (distanceBetweenObjects * direction);
             int i = 0; // iterate to prevent accidental 'forever loop'
 
-            while (i < 100 && (road.pointB - furthestBoundLeft).normalized == direction)
+            while (i < 100 && (relativeSideB - furthestBoundLeft).normalized == direction)
             {
                 RaycastHit furthestPointInfo;
-                Physics.Raycast(road.pointB, -direction, out furthestPointInfo, maxDistance: road.length);
+                Physics.Raycast(relativeSideB, -direction, out furthestPointInfo, maxDistance: road.length);
                 if (furthestPointInfo.point == Vector3.zero)
                 {
-                    Vector3 point = road.pointA;
+                    Vector3 point = relativeSideA;
                     furthestBoundLeft = point + (distanceBetweenObjects * direction);
                 }
                 else
                 {
                     Vector3 point = furthestPointInfo.point;
                     furthestBoundLeft = point + (distanceBetweenObjects * direction); ;
-                    if ((road.pointB - furthestBoundLeft).normalized != direction)
+                    if ((relativeSideB - furthestBoundLeft).normalized != direction)
                     {
                         break;
                     }
@@ -160,7 +159,7 @@ public class MapGeneration : MonoBehaviour
                 newOb.transform.Rotate(new Vector3(0, 90, 0));
                 road.buildings.Add(newOb);
                 Instantiate(newOb);
-                BuildWall(wall, newOb, road);
+                //BuildWall(wall, newOb, road);
                 i++;
             }
         }
@@ -175,6 +174,16 @@ public class MapGeneration : MonoBehaviour
                 Gizmos.DrawCube(r.pointA, Vector3.one);
                 //Gizmos.DrawCube(r.centre, Vector3.one);
                 Gizmos.DrawSphere(r.pointB, 1f);
+
+                // x = r(cos(degrees°)), y = r(sin(degrees°)).
+                Vector3 direction = (r.pointB - r.pointA).normalized;
+                float angleFromCentre = Vector3.Angle(Vector3.forward, direction) * (Mathf.PI/180);
+                float addX = r.width * Mathf.Sin(angleFromCentre + (90 * (Mathf.PI/180)));
+                float addY = r.width * Mathf.Cos(angleFromCentre + (90 * (Mathf.PI / 180)));
+                Vector3 pointALeft = new Vector3(r.pointA.x + addX, r.pointA.y, r.pointA.z + addY);
+                Vector3 pointARight = new Vector3(r.pointA.x - addX, r.pointA.y, r.pointA.z - addY);
+                Gizmos.DrawWireCube(pointALeft, Vector3.one * 2);
+                Gizmos.DrawWireCube(pointARight, Vector3.one * 2);
             }
         }
     }

@@ -434,6 +434,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: House B
       objectReference: {fileID: 0}
+    - target: {fileID: 1930221332740915905, guid: 392030694651a984ca34e1788d0e23e9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6483225671913915655, guid: 392030694651a984ca34e1788d0e23e9, type: 3}
       propertyPath: m_RootOrder
       value: 5
@@ -490,6 +494,10 @@ PrefabInstance:
     - target: {fileID: 6078708203482528114, guid: ed50ee53e747926418dec153366c919c, type: 3}
       propertyPath: m_Name
       value: Wall
+      objectReference: {fileID: 0}
+    - target: {fileID: 6078708203482528114, guid: ed50ee53e747926418dec153366c919c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8181371263162515281, guid: ed50ee53e747926418dec153366c919c, type: 3}
       propertyPath: m_RootOrder
@@ -548,6 +556,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: House A
       objectReference: {fileID: 0}
+    - target: {fileID: 164236973968292154, guid: 8258941827cb67a4f891494a3c4192dd, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4717505067033657084, guid: 8258941827cb67a4f891494a3c4192dd, type: 3}
       propertyPath: m_RootOrder
       value: 4
@@ -604,6 +616,10 @@ PrefabInstance:
     - target: {fileID: 3050720542841887712, guid: a5b142b67a2e2a54da9a433a93e27b39, type: 3}
       propertyPath: m_Name
       value: House C
+      objectReference: {fileID: 0}
+    - target: {fileID: 3050720542841887712, guid: a5b142b67a2e2a54da9a433a93e27b39, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7594999022539758630, guid: a5b142b67a2e2a54da9a433a93e27b39, type: 3}
       propertyPath: m_RootOrder

@@ -54,7 +54,7 @@ public class MapGeneration : MonoBehaviour
         float maxRoadLength = 60f;
         float maxRoadWidth = 20f;
         GameObject[] obsOfTheme = Resources.LoadAll<GameObject>($"Map Generation/{theme}");
-        List<Vector3> allDirs = new List<Vector3>() { Vector3.zero, Vector3.forward, Vector3.right, Vector3.left };
+        List<Vector3> directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left };
         if (!CheckCompletePrefabSet(theme, obsOfTheme))
         {
             throw new Exception("Not all the required prefabs are present");
@@ -64,36 +64,69 @@ public class MapGeneration : MonoBehaviour
         bool end = false;
         float curPos = init_point.z;
         float maxRoads = 20;
-        while (!end && i < maxRoads)
+        while (!end && allRoads.Count < maxRoads && i < 100)
         {
 
             Road tempRoad = new Road();
+            Vector3 newDir = directionOptions[Random.Range(0, directionOptions.Count)];
+            Vector3 newPointA;
             if (allRoads.Count == 0)
             {
-                tempRoad.pointA = init_point;
+                newPointA = init_point;
             }
             else
             {
-                tempRoad.pointA = allRoads[allRoads.Count - 1].pointB;
+                Road prevRoad = allRoads[allRoads.Count - 1];
+                Vector3 prevRoadDir = (prevRoad.pointB - prevRoad.pointA).normalized;
+                if (newDir != prevRoadDir)
+                {
+                    newPointA = prevRoad.pointB + (prevRoadDir * (maxRoadWidth / 2)) + (newDir * (prevRoad.width / 2));
+                }
+                else
+                {
+                    newPointA = allRoads[allRoads.Count - 1].pointB;
+                }
                 allRoads[allRoads.Count - 1].pointer = tempRoad;
             }
-            Vector3 newDir = allDirs[Random.Range(0, allDirs.Count)] * (maxRoadLength / 2);
-            tempRoad.centre = tempRoad.pointA + newDir;
-            tempRoad.pointB = tempRoad.centre + newDir;
-            //tempRoad.centre = new Vector3(tempRoad.pointA.x, tempRoad.pointA.y, tempRoad.pointA.z + (maxRoadLength / 2));
-            //tempRoad.pointB = new Vector3(tempRoad.centre.x, tempRoad.centre.y, tempRoad.centre.z + (maxRoadLength / 2));
+
+            tempRoad.pointA = newPointA;
+            tempRoad.centre = tempRoad.pointA + newDir * (maxRoadLength / 2);
+            tempRoad.pointB = tempRoad.centre + newDir * (maxRoadLength / 2);
             tempRoad.length = maxRoadLength;
             tempRoad.width = maxRoadWidth;
             tempRoad.pointer = null;
+            if (checkInTerrain(tempRoad))
+            {
+                SetRoadObjects(tempRoad, .7f, .9f, "Building", obsOfTheme);
+                allRoads.Add(tempRoad);
+            }
+            else
+            {
 
-            SetRoadObjects(tempRoad, .7f, .9f, "Building", obsOfTheme);
-            allRoads.Add(tempRoad);
+            }
             i++;
-            end = true;
         }
         print($"Road Count: {allRoads.Count}");
     }
 
+
+    private bool checkInTerrain(Road road)
+    {
+        Terrain t = GameObject.FindFirstObjectByType<Terrain>();
+        Bounds bounds = t.terrainData.bounds;
+        Vector3 roadDir = (road.pointB - road.pointA).normalized;
+        List<Vector3> allPoints = new List<Vector3>(){ road.pointA, road.pointB, road.pointA + (roadDir * road.width/2),
+        road.pointA - (roadDir * road.width/2), road.pointB + (roadDir * road.width / 2), road.pointB - (roadDir * road.width / 2)};
+        
+        foreach (Vector3 v in allPoints)
+        {
+            if (!bounds.Contains(new Vector3(v.x, 0, v.z)))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
     // the lower uniformity, the more equal distance objects will be from each other
     // the lower density, the further away objects will be 
@@ -155,8 +188,9 @@ public class MapGeneration : MonoBehaviour
                 GameObject newOb = prefabsOfTag[Random.Range(0, prefabsOfTag.Count)];
                 float newYPos = mapTerrain.SampleHeight(furthestBoundLeft);
                 newOb.transform.position = furthestBoundLeft;
-                newOb.transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
-                newOb.transform.Rotate(new Vector3(0, 90, 0));
+                Vector3 relDir = (side - road.pointA).normalized;
+                newOb.transform.rotation = Quaternion.LookRotation(relDir, Vector3.up);
+                //newOb.transform.Rotate(new Vector3(0, 90, 0));
                 road.buildings.Add(newOb);
                 Instantiate(newOb);
                 //BuildWall(wall, newOb, road);

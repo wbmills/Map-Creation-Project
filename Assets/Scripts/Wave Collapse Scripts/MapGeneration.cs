@@ -56,8 +56,8 @@ public class MapGeneration : MonoBehaviour
     {
         SetMapTerrain();
         SetDefaults();
-        obsOfTheme = GetObjectsOfTheme("default");
         curConfig = SetCurrentMapConfig();
+        obsOfTheme = GetObjectsOfTheme(curConfig.theme);
         GenerateMap();
     }
 
@@ -93,8 +93,7 @@ public class MapGeneration : MonoBehaviour
         GameObject[] allObjects = GetObjectsOfTheme(theme);
 
         int i = 0;
-        bool end = false;
-        float maxRoads = 100;
+        float maxRoads = 1000;
         Vector3 newDir;
         Road temp;
 
@@ -111,7 +110,7 @@ public class MapGeneration : MonoBehaviour
 
         curConfig.initPoint = unusedPoints[Random.Range(0, unusedPoints.Count)];
         unusedPoints.Remove(curConfig.initPoint);
-        while (allRoads.Count < maxRoads && i < maxRoads)
+        while (allRoads.Count < maxRoads && i < maxRoads && unusedPoints.Count > 2)
         {
             temp = null;
             float tempWidth = maxRoadWidth;
@@ -119,7 +118,7 @@ public class MapGeneration : MonoBehaviour
             Vector3 newPointA = Vector3.one;
             Vector3 newPointB = Vector3.one;
             List<Vector3> directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left };
-            while (temp == null && directionOptions.Count > 0 && unusedPoints.Count > 2)
+            while (temp == null && directionOptions.Count > 0)
             {
                 newDir = directionOptions[Random.Range(0, directionOptions.Count)];
                 directionOptions.Remove(newDir);
@@ -155,7 +154,6 @@ public class MapGeneration : MonoBehaviour
     {
         List<Vector3> positionsToPaint = new List<Vector3>();
         
-        int tries = 0;
 /*        if (road.prev != null)
         {
             Vector3 prevRoadWithWidth = road.prev.pointB + (road.prev.direction * (road.width / 2));
@@ -166,11 +164,11 @@ public class MapGeneration : MonoBehaviour
             positionsToPaint.Add(road.pointA);
         }*/
         positionsToPaint.Add(road.pointA);
-        while (tries < 200 && (road.pointB - positionsToPaint[positionsToPaint.Count - 1]).normalized == road.direction)
+        while ((road.pointB - positionsToPaint[positionsToPaint.Count - 1]).normalized == road.direction)
         {
             positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * 2));
         }
-        positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * 2));
+        //positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * 2));
 
         return positionsToPaint;
     }
@@ -196,8 +194,8 @@ public class MapGeneration : MonoBehaviour
         tempConfig.minRoadWidth = 20f;
         tempConfig.maxRoadWidth = 20f;
         tempConfig.minRoadLength = 60f;
-        tempConfig.maxRoadLength = 60f;
-        tempConfig.theme = "default";
+        tempConfig.maxRoadLength = 30f;
+        tempConfig.theme = "Village";
         tempConfig.initPoint = new Vector3(60f, 0f, 60f);
         return tempConfig;
     }
@@ -260,7 +258,8 @@ public class MapGeneration : MonoBehaviour
 
         if (!blank && checkInTerrain(tempRoad))
         {
-            SetRoadObjects(tempRoad, uniformity:.7f, density:.7f, "Building", obsOfTheme);
+            SetRoadObjects(tempRoad, uniformity:.7f, density: .1f, "Building", obsOfTheme, false);
+            SetRoadObjects(tempRoad, uniformity: .7f, density: .6f, "Tree", obsOfTheme, false);
             PaintTerrain(tempRoad.road);
             allRoads.Add(tempRoad);
         }
@@ -309,7 +308,7 @@ public class MapGeneration : MonoBehaviour
 
     // the lower uniformity, the more equal distance objects will be from each other
     // the lower density, the further away objects will be 
-    private void SetRoadObjects(Road road, float uniformity, float density, string objectTag, GameObject[] allPrefabs)
+    private void SetRoadObjects(Road road, float uniformity, float density, string objectTag, GameObject[] allPrefabs, bool generateWalls=false)
     {
         density = 1 - density;
         uniformity = 1 - uniformity;
@@ -372,7 +371,10 @@ public class MapGeneration : MonoBehaviour
                 //newOb.transform.Rotate(new Vector3(0, 90, 0));
                 road.buildings.Add(newOb);
                 Instantiate(newOb);
-                BuildWall(wall, newOb, road);
+                if (generateWalls)
+                {
+                    BuildWall(wall, newOb, road);
+                }
                 i++;
             }
         }

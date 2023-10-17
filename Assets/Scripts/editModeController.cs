@@ -21,7 +21,6 @@ public class editModeController : MonoBehaviour
     private Vector3 terrainBounds;
     public GameObject wall;
     public TMP_InputField fileNameInput;
-    private menuController menuCon;
 
     private float scrollSensitivity = 80f;
     private loadTown ltScript;
@@ -33,6 +32,7 @@ public class editModeController : MonoBehaviour
     private Vector3 curMousePos;
     private cameraController camCon;
     private Vector3 spotlightPosition;
+    private MapGeneration MGScript;
 
     void Start()
     {
@@ -44,14 +44,14 @@ public class editModeController : MonoBehaviour
         ltScript = sceneController.GetComponent<loadTown>();
         camCon = sceneController.GetComponent<cameraController>();
         tgScript = gameObject.GetComponent<townGeneration>();
-        menuCon = GameObject.Find("Menu").GetComponent<menuController>();
+        MGScript = gameObject.GetComponent<MapGeneration>();
         updatePrefabs();
         setButtons();
     }
 
     public void updateTerrainObject()
     {
-        terrain = tgScript.getCurrentTerrain();
+        terrain = MGScript.GetCurrentTerrain();
         if (terrain)
         {
             terrainBounds = terrain.terrainData.size;
@@ -269,7 +269,7 @@ public class editModeController : MonoBehaviour
 
     private void connectWalls()
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) && camCon.currentCamera.gameObject.name == "EditModeCamera")
         {
             GameObject con1 = null;
             GameObject con2 = null;

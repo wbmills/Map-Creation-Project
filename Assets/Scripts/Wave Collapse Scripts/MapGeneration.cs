@@ -56,6 +56,11 @@ public class MapGeneration : MonoBehaviour
     {
         SetMapTerrain();
         SetDefaults();
+        ResetTerrainPaint();
+    }
+
+    public void NewMap()
+    {
         curConfig = SetCurrentMapConfig();
         obsOfTheme = GetObjectsOfTheme(curConfig.theme);
         GenerateMap();
@@ -259,7 +264,7 @@ public class MapGeneration : MonoBehaviour
         if (!blank && checkInTerrain(tempRoad))
         {
             SetRoadObjects(tempRoad, uniformity:.7f, density: .1f, "Building", obsOfTheme, false);
-            SetRoadObjects(tempRoad, uniformity: .7f, density: .6f, "Tree", obsOfTheme, false);
+            //SetRoadObjects(tempRoad, uniformity: .7f, density: .6f, "Tree", obsOfTheme, false);
             PaintTerrain(tempRoad.road);
             allRoads.Add(tempRoad);
         }
@@ -273,6 +278,11 @@ public class MapGeneration : MonoBehaviour
         }
 
         return tempRoad;
+    }
+
+    public Terrain GetCurrentTerrain()
+    {
+        return mapTerrain;
     }
 
     private bool checkInTerrain(Road road)
@@ -342,7 +352,7 @@ public class MapGeneration : MonoBehaviour
             //Vector3 furthestBoundLeft = new Vector3(road.pointA.x, road.pointA.y, road.pointA.z + distanceBetweenObjects); // last point is the furthest point where there is an object placed on the road
             Vector3 furthestBoundLeft = relativeSideA + (distanceBetweenObjects * direction);
             int i = 0; // iterate to prevent accidental 'forever loop'
-
+            GameObject lastOb = null;
             while (i < 5 && (relativeSideB - furthestBoundLeft).normalized == direction)
             {
                 RaycastHit furthestPointInfo;
@@ -361,7 +371,6 @@ public class MapGeneration : MonoBehaviour
                         break;
                     }
                 }
-
                 // set new object and its position
                 GameObject newOb = prefabsOfTag[Random.Range(0, prefabsOfTag.Count)];
                 float newYPos = mapTerrain.SampleHeight(furthestBoundLeft);
@@ -369,11 +378,15 @@ public class MapGeneration : MonoBehaviour
                 Vector3 relDir = (side - road.pointA).normalized;
                 newOb.transform.rotation = Quaternion.LookRotation(relDir, Vector3.up);
                 //newOb.transform.Rotate(new Vector3(0, 90, 0));
-                road.buildings.Add(newOb);
-                Instantiate(newOb);
-                if (generateWalls)
+                if (lastOb == null | (lastOb && lastOb.transform.position != newOb.transform.position))
                 {
-                    BuildWall(wall, newOb, road);
+                    road.buildings.Add(newOb);
+                    Instantiate(newOb);
+                    if (generateWalls)
+                    {
+                        BuildWall(wall, newOb, road);
+                    }
+                    lastOb = newOb;
                 }
                 i++;
             }

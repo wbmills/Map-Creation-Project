@@ -1,7 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
+
+// menu part 2
 public class MenuController : MonoBehaviour
 {
     public List<GameObject> allMenuCanvases;
@@ -12,8 +17,24 @@ public class MenuController : MonoBehaviour
     {
         allMenuCanvases = new List<GameObject>();
         UpdateMenuCanvases();
-        SetCurMenu("Welcome Canvas");
         SetCurMenu(menuName:"Welcome Canvas");
+    }
+
+    private void Update()
+    {
+        if (((Camera)FindFirstObjectByType(typeof(Camera))).gameObject.name != "MenuCamera")
+        {
+            HideMenus();
+        }
+    }
+
+    private void setupPlayerPrefs()
+    {
+        PlayerPrefs.SetInt("houseNum", 0);
+        PlayerPrefs.SetInt("treeNum", 0);
+        PlayerPrefs.SetInt("extrasNum", 0);
+        PlayerPrefs.SetInt("roadSize", 0);
+        PlayerPrefs.Save();
     }
 
     private void UpdateMenuCanvases()

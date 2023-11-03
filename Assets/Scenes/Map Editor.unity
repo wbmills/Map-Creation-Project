@@ -379,7 +379,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 2967549486468879814}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2967549486468879815}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01337ac9e11568448952a00661c01588, type: 3}
   m_Name: 
@@ -410,7 +410,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1393590255
 Transform:
   m_ObjectHideFlags: 0
@@ -726,7 +726,7 @@ PrefabInstance:
       objectReference: {fileID: 4570886883723936650}
     - target: {fileID: 2967549487514643541, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2967549487514643541, guid: caf1abdfb54cbc9468a4d6d500728a31, type: 3}
       propertyPath: terrainToSpawn

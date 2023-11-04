@@ -28,6 +28,15 @@ public class Road
     public Vector3 road;
 }
 
+public class Connection
+{
+    public Connection prevCon = null;
+    public Connection nextCon = null;
+    public int[] index = new int[2];
+    public Vector3 position;
+
+}
+
 public class MapConfig
 {
     public Terrain terrain;
@@ -71,19 +80,89 @@ public class MapGeneration : MonoBehaviour
         GenerateMap();
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            regenerateMap();
+        }
+    }
+
     private void ResetTerrainPaint()
     {
         foreach (Road r in allRoads)
         {
             PaintTerrain(r.road, r.direction, true);
         }
-        
+
+    }
+
+    public void resetRoads()
+    {
+        allRoads.Clear();
+        foreach (GameObject ob in allObjectsInMap)
+        {
+            Destroy(ob);
+        }
+        allObjectsInMap.Clear();
+    }
+
+    public void regenerateMap()
+    {
+        ResetTerrainPaint();
+        resetRoads();
+        curConfig = SetCurrentMapConfig();
+        obsOfTheme = GetObjectsOfTheme(curConfig.theme);
+        GenerateMap();
     }
 
     private void SetDefaults()
     {
         allRoads = new List<Road>();
         allObjectsInMap = new List<GameObject>();
+    }
+
+    private void GenerateFromArray(Connection[,] arr)
+    {
+        foreach (Connection c in arr)
+        {
+            if (c != null && c.nextCon != null)
+            {
+                Vector3 dir = (c.nextCon.position - c.position).normalized;
+                GenerateRoad(c.position, c.nextCon.position, dir);
+            }
+        }
+    }
+
+    private Connection[,] GenerateMapTemplate()
+    {
+        float maxRoadLength = curConfig.maxRoadLength;
+        float maxRoadWidth = curConfig.maxRoadWidth;
+        int arrWidth = Mathf.RoundToInt((mapTerrain.terrainData.size.x - maxRoadLength) / maxRoadLength);
+        int arrHeight = Mathf.RoundToInt((mapTerrain.terrainData.size.z - maxRoadLength) / maxRoadLength);
+        allPoints = new Vector3[arrWidth, arrHeight];
+        Connection[,] mapPoints = new Connection[arrWidth, arrHeight];
+        int w = 0;
+        int h = 0;
+        for (float x = maxRoadLength; x < mapTerrain.terrainData.size.x - maxRoadLength; x += maxRoadLength)
+        {
+            for (float z = maxRoadLength; z < mapTerrain.terrainData.size.z - maxRoadLength; z += maxRoadLength)
+            {
+                Vector3 newPos = new Vector3(x, 0, z);
+                allPoints[w, h] = newPos;
+                Connection newCon = new Connection();
+                newCon.index = new int[2] { w, h };
+                newCon.nextCon = null;
+                newCon.prevCon = null;
+                newCon.position = new Vector3(x, 0, z);
+                mapPoints[w, h] = newCon;
+                w += 1;
+            }
+            h += 1;
+            w = 0;
+        }
+
+        return mapPoints;
     }
 
     // Generate map (in progress)
@@ -94,88 +173,38 @@ public class MapGeneration : MonoBehaviour
         string theme = curConfig.theme;
         float maxRoadLength = curConfig.maxRoadLength;
         float maxRoadWidth = curConfig.maxRoadWidth;
-        float minRoadWidth = curConfig.minRoadWidth;
-        float minRoadLength = curConfig.minRoadLength;
         GameObject[] allObjects = GetObjectsOfTheme(theme);
-
-        int i = 0;
         float maxRoads = 4000;
-        Vector3 newDir;
-        Road temp;
 
-        int arrWidth = Mathf.RoundToInt((mapTerrain.terrainData.size.x - maxRoadLength)/maxRoadLength);
-        int arrHeight = Mathf.RoundToInt((mapTerrain.terrainData.size.z - maxRoadLength) / maxRoadLength);
-        allPoints = new Vector3[arrWidth, arrHeight];
-        unusedPoints = new List<Vector3>();
-        Vector3[,] unusedPoints2D = new Vector3[arrWidth, arrHeight];
-        int w = 0;
-        int h = 0;
-        for (float x = maxRoadLength; x < mapTerrain.terrainData.size.x - maxRoadLength; x += maxRoadLength)
+        Connection[,] map = GenerateMapTemplate();
+        int[] mapSize = new int[2] { map.GetLength(0), map.GetLength(1) };
+        // generate random maze 
+        Connection curCon = map[Random.Range(0, map.GetLength(0)), Random.Range(0, map.GetLength(1))];
+        Connection nextCon = null;
+        int spaces = map.Length;
+        while (spaces > 0 && curCon.index[0] < mapSize[0] && curCon.index[1] < mapSize[1])
         {
-            for (float z = maxRoadLength; z < mapTerrain.terrainData.size.z - maxRoadLength; z += maxRoadLength)
+            int[] newIndex = new int[2] { curCon.index[0] + 1, curCon.index[1]};
+            try
             {
-                Vector3 newPos = new Vector3(x, 0, z);
-                unusedPoints.Add(newPos);
-                allPoints[w, h] = newPos;
-                unusedPoints2D[w, h] = newPos;
-                w += 1;
+                nextCon = map[newIndex[0], newIndex[1]];
             }
-            h += 1;
-            w = 0;
-        }
-        curConfig.initPoint = unusedPoints[Random.Range(0, unusedPoints.Count)];
-        unusedPoints.Remove(curConfig.initPoint);
-        while (allRoads.Count < maxRoads && i < maxRoads && unusedPoints.Count > 2)
-        {
-            temp = null;
-            float tempWidth = maxRoadWidth;
-
-            Vector3 newPointA = Vector3.one;
-            Vector3 newPointB = Vector3.one;
-            List<Vector3> directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left };
-            while (temp == null && directionOptions.Count > 0)
+            catch (Exception)
             {
-                newDir = directionOptions[Random.Range(0, directionOptions.Count)];
-                directionOptions.Remove(newDir);
-                if (allRoads.Count == 0)
-                {
-                    newPointA = curConfig.initPoint;
-                }
-                else
-                {
-                    Road prevRoad = allRoads[allRoads.Count-1];
-                    newPointA = prevRoad.pointB;
-                }
-               
-
-                newPointB = newPointA + (newDir * maxRoadLength);
-                temp = GenerateRoad(newPointA, newPointB, newDir);
-                
-                if ((temp == null && directionOptions.Count == 0) | !unusedPoints.Contains(newPointB))
-                {
-                    newPointA = unusedPoints[Random.Range(0, unusedPoints.Count)];
-                    newPointB = newPointA + (newDir * maxRoadLength);
-                    temp = GenerateRoad(newPointA, newPointB, newDir);
-                }
-                if (temp != null)
-                {
-                    PaintTerrain(temp.road, temp.direction);
-                }
+                nextCon = null;
             }
-            unusedPoints.Remove(newPointA);
-            unusedPoints.Remove(newPointB);
-            i++;
-        }
-/*        List<Vector3> finalPaint = new List<Vector3>();
-        foreach (Road r in allRoads)
-        {
-            foreach(Vector3 v in r.road)
+            
+            curCon.nextCon = nextCon;
+
+            curCon = nextCon;
+            if (nextCon == null)
             {
-                finalPaint.Add(v);
-            } 
+                break;
+            }
+            spaces -= 1;
         }
-        PaintTerrain(finalPaint);*/
-        print($"Road Count: {allRoads.Count}");
+
+        GenerateFromArray(map);
     }
 
     private Vector3 SetRoadVectors(Road road)
@@ -198,26 +227,6 @@ public class MapGeneration : MonoBehaviour
             }
         }
         return smallest;
-        /*        //Vector3 A = road.pointA;
-                //Vector3 B = road.pointB;
-                List<Vector3> positionsToPaint = new List<Vector3>();
-                Vector3 tempStartPos = A;
-                int scale = 6;
-                positionsToPaint.Add(tempStartPos);
-                while (((tempStartPos + (road.direction * road.length)) - positionsToPaint[positionsToPaint.Count - 1]).normalized == road.direction)
-                {
-                    positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * scale));
-                }*/
-        /*
-                for (float i = (road.width * 2); i > 0; i -= scale)
-                {
-                    tempStartPos = new Vector3(A.x, A.y, A.z) - (i * rotateDir);
-                    positionsToPaint.Add(tempStartPos);
-                    while (((tempStartPos + (road.direction * road.length)) - positionsToPaint[positionsToPaint.Count - 1]).normalized == road.direction)
-                    {
-                        positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * scale));
-                    }
-                }*/
     }
 
     private void OnApplicationQuit()
@@ -311,8 +320,8 @@ public class MapGeneration : MonoBehaviour
 
         if (!blank && checkInTerrain(tempRoad))
         {
-            SetRoadObjects(tempRoad, "Building", obsOfTheme, false);
-            //PaintTerrain(tempRoad.road);
+            //SetRoadObjects(tempRoad, "Building", obsOfTheme, false);
+            PaintTerrain(tempRoad.road, tempRoad.direction);
             allRoads.Add(tempRoad);
         }
         else if (blank)
@@ -662,3 +671,65 @@ public class MapGeneration : MonoBehaviour
         return false;
     }
 }
+
+
+/*while (allRoads.Count < maxRoads && i < maxRoads && spaces > 2)
+        {
+            temp = null;
+            float tempWidth = maxRoadWidth;
+
+            Vector3 newPointA = Vector3.one;
+            Vector3 newPointB = Vector3.one;
+            List<Vector3> directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left };
+            while (temp == null && directionOptions.Count > 0)
+            {
+                newDir = directionOptions[Random.Range(0, directionOptions.Count)];
+                directionOptions.Remove(newDir);
+                Road prevRoad;
+                if (allRoads.Count == 0)
+                {
+                    newPointA = curConfig.initPoint;
+                    prevRoad = null;
+                }
+                else
+                {
+                    prevRoad = allRoads[allRoads.Count-1];
+                    newPointA = prevRoad.pointB;
+                }
+
+                int times = 0;
+                directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left , Vector3.down};
+                
+                if (prevRoad != null)
+                {
+                    directionOptions.Remove(-prevRoad.direction);
+                }
+                do
+                {
+                    newDir = directionOptions[Random.Range(0, directionOptions.Count)];
+                    directionOptions.Remove(newDir);
+                    nextIndex[0] = (int)(curIndex[0] + newDir.x);
+                    nextIndex[1] = (int)(curIndex[1] + newDir.z);
+
+                    times += 1;
+                    if (directionOptions.Count == 0)
+                    {
+                        print("no direction");
+                        curIndex = new int[2] { (int)Random.Range(0, unusedPoints2D.GetLength(0)), Random.Range(0, unusedPoints2D.GetLength(1)) };
+                        directionOptions = new List<Vector3>() { Vector3.forward, Vector3.right, Vector3.left };
+                    }
+                }
+                while (unusedPoints2D[nextIndex[0], nextIndex[1]] == Vector3.zero * 99 && times < 50);
+                
+                newPointB = unusedPoints2D[nextIndex[0], nextIndex[1]];
+                prevIndex = curIndex;
+                curIndex = nextIndex;
+                unusedPoints2D[nextIndex[0], nextIndex[1]] = Vector3.zero * 99;
+                temp = GenerateRoad(newPointA, newPointB, newDir);
+                */
+/*                if (temp == null && directionOptions.Count == 0)
+                {
+                    newPointA = unusedPoints[Random.Range(0, unusedPoints.Count)];
+                    newPointB = newPointA + (newDir * maxRoadLength);
+                    temp = GenerateRoad(newPointA, newPointB, newDir);
+                }*/

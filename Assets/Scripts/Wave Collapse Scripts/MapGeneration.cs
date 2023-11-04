@@ -25,7 +25,7 @@ public class Road
     public float width;
     public float length;
 
-    public List<Vector3> road = new List<Vector3>();
+    public Vector3 road;
 }
 
 public class MapConfig
@@ -75,7 +75,7 @@ public class MapGeneration : MonoBehaviour
     {
         foreach (Road r in allRoads)
         {
-            PaintTerrain(r.road, true);
+            PaintTerrain(r.road, r.direction, true);
         }
         
     }
@@ -99,7 +99,7 @@ public class MapGeneration : MonoBehaviour
         GameObject[] allObjects = GetObjectsOfTheme(theme);
 
         int i = 0;
-        float maxRoads = 40;
+        float maxRoads = 4000;
         Vector3 newDir;
         Road temp;
 
@@ -159,9 +159,8 @@ public class MapGeneration : MonoBehaviour
                 }
                 if (temp != null)
                 {
-                    PaintTerrain(temp.road);
+                    PaintTerrain(temp.road, temp.direction);
                 }
-                
             }
             unusedPoints.Remove(newPointA);
             unusedPoints.Remove(newPointB);
@@ -179,18 +178,26 @@ public class MapGeneration : MonoBehaviour
         print($"Road Count: {allRoads.Count}");
     }
 
-    private List<Vector3> SetRoadVectors(Road road)
+    private Vector3 SetRoadVectors(Road road)
     {
 
         float angleFromCentre = Vector3.Angle(Vector3.forward, road.direction) * (Mathf.PI / 180);
         float addX = road.width * Mathf.Sin(angleFromCentre + (90 * (Mathf.PI / 180)));
         float addZ = road.width * Mathf.Cos(angleFromCentre + (90 * (Mathf.PI / 180)));
         Vector3 rotateDir = new Vector3(Mathf.Sin(angleFromCentre + (90 * (Mathf.PI / 180))), 0, Mathf.Cos(angleFromCentre + (90 * (Mathf.PI / 180))));
-        Vector3 A = new Vector3(road.pointA.x - addX, road.pointA.y, road.pointA.z + addZ);
-        Vector3 B = A + (road.direction * road.length);
-        List<Vector3> positionsToPaint = new List<Vector3>();
-        positionsToPaint.Add(A);
-        positionsToPaint.Add(road.direction);
+        Vector3 A = new Vector3(road.pointA.x - addX, road.pointA.y, road.pointA.z - addZ);
+        Vector3 B = new Vector3(road.pointA.x + addX, road.pointA.y, road.pointA.z + addZ);
+        Vector3 C = new Vector3(road.pointB.x - addX, road.pointB.y, road.pointB.z - addZ);
+        Vector3 D = new Vector3(road.pointB.x + addX, road.pointB.y, road.pointB.z + addZ);
+        Vector3 smallest = A;
+        foreach (Vector3 i in new List<Vector3>() { A, B, C, D })
+        {
+            if (i.x < smallest.x | i.z < smallest.z)
+            {
+                smallest = i;
+            }
+        }
+        return smallest;
         /*        //Vector3 A = road.pointA;
                 //Vector3 B = road.pointB;
                 List<Vector3> positionsToPaint = new List<Vector3>();
@@ -211,7 +218,6 @@ public class MapGeneration : MonoBehaviour
                         positionsToPaint.Add(positionsToPaint[positionsToPaint.Count - 1] + (road.direction * scale));
                     }
                 }*/
-        return positionsToPaint;
     }
 
     private void OnApplicationQuit()
@@ -233,9 +239,9 @@ public class MapGeneration : MonoBehaviour
     {
         MapConfig tempConfig = new MapConfig();
         tempConfig.minRoadWidth = 20f;
-        tempConfig.maxRoadWidth = 10f;
+        tempConfig.maxRoadWidth = 5f;
         tempConfig.minRoadLength = 60f;
-        tempConfig.maxRoadLength = 60f;
+        tempConfig.maxRoadLength = 20f;
         tempConfig.theme = "Default";
         tempConfig.uniformity = .7f;
         tempConfig.density = 0f;
@@ -243,17 +249,11 @@ public class MapGeneration : MonoBehaviour
         return tempConfig;
     }
 
-    public void PaintTerrain(List<Vector3> positionsToPaint, bool reset=false)
+    public void PaintTerrain(Vector3 positionToPaint, Vector3 dir, bool reset=false)
     {
         Terrain terrain = mapTerrain;
-        Vector3 dir = positionsToPaint[1]; //(positionsToPaint[1] - positionsToPaint[0]).normalized;
-        if (positionsToPaint[1].x == -1)
-        {
-            positionsToPaint[0] = new Vector3(positionsToPaint[0].x - curConfig.minRoadLength, 
-                positionsToPaint[0].y, positionsToPaint[0].z);
-        }
         dir = new Vector3(MathF.Abs(dir.x), MathF.Abs(dir.y), MathF.Abs(dir.z));
-        Vector3 tile = positionsToPaint[0];
+        Vector3 tile = positionToPaint;
 
         Vector3 terrainPos = tile - terrain.transform.position;
         Vector3 mapPos = new Vector3(terrainPos.x / terrain.terrainData.size.x, 0, terrainPos.z / terrain.terrainData.size.z);
@@ -287,11 +287,6 @@ public class MapGeneration : MonoBehaviour
             }
             terrain.terrainData.SetAlphamaps(posX, posZ, splatmapData);
         }
-/*        foreach (Vector3 tile in positionsToPaint)
-        {
-            
-            
-        }*/
     }
 
     private Road GenerateRoad(Vector3 pointA, Vector3 pointB, Vector3 relativeDirection, bool blank=false)

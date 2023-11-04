@@ -124,22 +124,25 @@ public class MapGeneration : MonoBehaviour
 
     private void GenerateFromArray(Connection[,] arr)
     {
+        int roads = 0;
         foreach (Connection c in arr)
         {
             if (c != null && c.nextCon != null)
             {
                 Vector3 dir = (c.nextCon.position - c.position).normalized;
                 GenerateRoad(c.position, c.nextCon.position, dir);
+                roads += 1;
             }
         }
+        print($"Roads: {roads}");
     }
 
     private Connection[,] GenerateMapTemplate()
     {
         float maxRoadLength = curConfig.maxRoadLength;
         float maxRoadWidth = curConfig.maxRoadWidth;
-        int arrWidth = Mathf.RoundToInt((mapTerrain.terrainData.size.x - maxRoadLength) / maxRoadLength);
-        int arrHeight = Mathf.RoundToInt((mapTerrain.terrainData.size.z - maxRoadLength) / maxRoadLength);
+        int arrWidth = Mathf.FloorToInt((mapTerrain.terrainData.size.x - maxRoadLength) / maxRoadLength);
+        int arrHeight = Mathf.FloorToInt((mapTerrain.terrainData.size.z - maxRoadLength) / maxRoadLength);
         allPoints = new Vector3[arrWidth, arrHeight];
         Connection[,] mapPoints = new Connection[arrWidth, arrHeight];
         int w = 0;
@@ -161,7 +164,6 @@ public class MapGeneration : MonoBehaviour
             h += 1;
             w = 0;
         }
-
         return mapPoints;
     }
 
@@ -176,34 +178,114 @@ public class MapGeneration : MonoBehaviour
         GameObject[] allObjects = GetObjectsOfTheme(theme);
         float maxRoads = 4000;
 
+        List<int[]> freeIndexes = new List<int[]>();
         Connection[,] map = GenerateMapTemplate();
+        foreach(Connection c in map)
+        {
+            if (c != null && c.index != null)
+            {
+                freeIndexes.Add(c.index);
+            }
+        }
         int[] mapSize = new int[2] { map.GetLength(0), map.GetLength(1) };
         // generate random maze 
-        Connection curCon = map[Random.Range(0, map.GetLength(0)), Random.Range(0, map.GetLength(1))];
+        Connection curCon = null;
         Connection nextCon = null;
-        int spaces = map.Length;
-        while (spaces > 0 && curCon.index[0] < mapSize[0] && curCon.index[1] < mapSize[1])
+        int spaces = map.GetLength(0) * map.GetLength(1) * 2;
+        int limit = 0;
+        while (spaces > 100 && limit < 5)
         {
-            int[] newIndex = new int[2] { curCon.index[0] + 1, curCon.index[1]};
-            try
+            Vector3Int newDir;
+            int[] newIndex = new int[2] { 0, 0 };
+            List<Vector3Int> dirOptions = new List<Vector3Int>() { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
+            List<Vector3Int> dirOptionsCopy = new List<Vector3Int>() { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
+            bool tr = true;
+            limit = 0;
+            Vector3Int curDir;
+            while (tr && limit < 10)
             {
-                nextCon = map[newIndex[0], newIndex[1]];
+                // set initial connection in map. If previous connection hit another connection, pick random point in map.
+                if ((curCon != null && curCon.nextCon != null) && curCon.nextCon != null)
+                {
+                    Vector3Int dir = Vector3Int.FloorToInt((curCon.nextCon.position - curCon.position).normalized);
+                    dirOptions = new List<Vector3Int>() { dir };
+                    //curCon = null;
+                }
+
+                if (curCon == null)
+                {
+                    bool isNull = true;
+                    do
+                    {
+                        int[] i = freeIndexes[Random.Range(0, freeIndexes.Count)];
+                        curCon = map[i[0], i[1]];
+                        // curCon = map[Random.Range(0, map.GetLength(0)), Random.Range(0, map.GetLength(1))];
+                        if (curCon != null && curCon.nextCon == null)
+                        {
+                            isNull = false;
+                        }
+                        dirOptions = new List<Vector3Int>() { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
+                    }
+                    while (isNull);
+                }
+
+                // prevent connection from going back on itself. 
+                if (curCon.prevCon != null)
+                {
+                    curDir = Vector3Int.FloorToInt((curCon.position - curCon.prevCon.position).normalized);
+                    if (dirOptions.Contains(curDir)){
+                        dirOptions.Remove(curDir);
+                    }
+                }
+
+                // remove possible directions that are unavalible
+                foreach (Vector3Int dir in dirOptionsCopy)
+                {
+                    newIndex = new int[2] { curCon.index[0] + dir.x, curCon.index[1] + dir.z };
+                    if (newIndex[0] >= map.GetLength(0) - 2 | newIndex[1] >= map.GetLength(1) - 2 | newIndex[0] <= 1 | newIndex[1] <= 1)
+                    {
+                        dirOptions.Remove(dir);
+                    }
+                }
+                if (dirOptions.Count == 0)
+                {
+                    curCon = null;
+                }
+                else
+                {
+                    tr = false;
+                }
+                limit++;
             }
-            catch (Exception)
+
+            if (dirOptions.Count > 0)
             {
-                nextCon = null;
+                newDir = dirOptions[Random.Range(0, dirOptions.Count)];
+                newIndex = new int[2] { curCon.index[0] + newDir.x, curCon.index[1] + newDir.z };
+                freeIndexes.Remove(newIndex);
+                nextCon = map[newIndex[0], newIndex[1]];
+
+                nextCon.prevCon = curCon;
+                curCon.nextCon = nextCon;
+                spaces--;
+                // if next connection has another connection, set up current connection to go to random point in map
+                if (nextCon.nextCon != null)
+                {
+                    //curCon = null;
+                    curCon = nextCon;
+                }
+                else
+                {
+                    curCon = nextCon;
+                }
+            }
+            else
+            {
+                curCon = null;
             }
             
-            curCon.nextCon = nextCon;
-
-            curCon = nextCon;
-            if (nextCon == null)
-            {
-                break;
-            }
-            spaces -= 1;
         }
-
+        nextCon = null;
         GenerateFromArray(map);
     }
 
@@ -248,12 +330,12 @@ public class MapGeneration : MonoBehaviour
     {
         MapConfig tempConfig = new MapConfig();
         tempConfig.minRoadWidth = 20f;
-        tempConfig.maxRoadWidth = 5f;
+        tempConfig.maxRoadWidth = 7f;
         tempConfig.minRoadLength = 60f;
-        tempConfig.maxRoadLength = 20f;
+        tempConfig.maxRoadLength = 30f;
         tempConfig.theme = "Default";
         tempConfig.uniformity = .7f;
-        tempConfig.density = 0f;
+        tempConfig.density = 0.3f;
         tempConfig.initPoint = new Vector3(60f, 0f, 60f);
         return tempConfig;
     }
@@ -275,8 +357,8 @@ public class MapGeneration : MonoBehaviour
             //int c = Mathf.RoundToInt(curConfig.maxRoadWidth) * 2;
             int c = (int)curConfig.maxRoadWidth;
             int b = (int)curConfig.maxRoadLength;
-            int xMax = (int)(c * dir.z) * 2 + (int)(b * dir.x);
-            int yMax = (int)(c * dir.x) * 2 + (int)(b * dir.z);
+            int xMax = (int)(c * dir.z) * 2 + (int)(b * dir.x) + (int)(1 * dir.x);
+            int yMax = (int)(c * dir.x) * 2 + (int)(b * dir.z) + (int)(1 * dir.z);
             float[,,] splatmapData = terrain.terrainData.GetAlphamaps(posX, posZ, xMax, yMax);
             for (int y = 0; y < xMax; y++)
             {
@@ -320,7 +402,7 @@ public class MapGeneration : MonoBehaviour
 
         if (!blank && checkInTerrain(tempRoad))
         {
-            //SetRoadObjects(tempRoad, "Building", obsOfTheme, false);
+            SetRoadObjects(tempRoad, "Building", obsOfTheme, false);
             PaintTerrain(tempRoad.road, tempRoad.direction);
             allRoads.Add(tempRoad);
         }
@@ -443,7 +525,8 @@ public class MapGeneration : MonoBehaviour
                     if (lastOb == null | (lastOb && lastOb.transform.position != newOb.transform.position))
                     {
                         road.buildings.Add(newOb);
-                        Instantiate(newOb);
+                        CreateNewObject(newOb, newOb.transform.position, newOb.transform.rotation, "Building");
+                        //Instantiate(newOb);
                         if (generateWalls)
                         {
                             BuildWall(wall, newOb, road);
